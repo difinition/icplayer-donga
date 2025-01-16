@@ -229,10 +229,7 @@ function Addontext_identification_create() {
     };
 
     presenter.centerElements = function ($text, $container) {
-        var bMathJax = false;
-
-        function setElement(){
-            bMathJax = true;
+        $.when(presenter.mathJaxProcessEnded).then(function () {
             var contentWidth = parseInt($text.css('width'), 10),
                 contentHeight = parseInt($text.css('height'), 10),
                 containerWidth = parseInt(viewContainer.css('width'), 10),
@@ -247,14 +244,7 @@ function Addontext_identification_create() {
                 width: containerWidth + 'px',
                 height: containerHeight + 'px'
             });
-        }
-        $.when(presenter.mathJaxProcessEnded).then(function () {
-            setElement();
         });
-
-//        setTimeout(function(){
-//            if( !bMathJax) setElement();
-//        }, 300)
     };
 
     function presenterLogic(view, model, isPreview) {

@@ -17,6 +17,8 @@ function Addonvideo_create() {
     presenter.$view = null;
     presenter.files = [];
     presenter.video = null;
+    presenter.hlsPlayer = null;
+    presenter.isHLSValue = null;
     presenter.controlBar = null;
     presenter.isVideoSpeedControllerAdded = false;
     presenter.isCurrentlyVisible = true;
@@ -134,6 +136,19 @@ function Addonvideo_create() {
         return upgradedModel;
     };
 
+    presenter.upgradeHLS = function (model) {
+        var upgradedModel = {};
+        $.extend(true, upgradedModel, model); // Deep copy
+
+        for (var i = 0; i < model.Files.length; i++) {
+            if (!upgradedModel.Files[i]['m3u8 video']) {
+                upgradedModel.Files[i]['m3u8 video'] = "";
+            }
+        }
+
+        return upgradedModel;
+    };
+
     presenter.upgradeModel = function (model) {
         var upgradedModel = presenter.upgradePoster(model);
         upgradedModel = presenter.upgradeTimeLabels(upgradedModel);
@@ -141,7 +156,9 @@ function Addonvideo_create() {
         upgradedModel = presenter.upgradeOfflineMessage(upgradedModel);
         upgradedModel = presenter.upgradeVideoSpeedController(upgradedModel);
         upgradedModel = presenter.upgradeShowPlayButton(upgradedModel);
-        return presenter.upgradeBaseDimensions(upgradedModel);
+        upgradedModel = presenter.upgradeBaseDimensions(upgradedModel);
+        upgradedModel = presenter.removeShowVideoFromModel(upgradedModel);
+        return presenter.upgradeHLS(upgradedModel);
     };
 
     presenter.upgradePoster = function (model) {
@@ -214,6 +231,17 @@ function Addonvideo_create() {
         return upgradedModel;
     }
 
+    presenter.removeShowVideoFromModel = function(model) {
+        const upgradedModel = {};
+        $.extend(true, upgradedModel, model);
+
+        if (upgradedModel.hasOwnProperty("Show video")) {
+            delete upgradedModel["Show video"];
+        }
+
+        return upgradedModel;
+    };
+
     presenter.callMetadataLoadedQueue = function () {
         for (var i = 0; i < presenter.metadataQueue.length; i++) {
             var queueElement = presenter.metadataQueue[i];
@@ -259,7 +287,8 @@ function Addonvideo_create() {
     presenter.videoTypes = [
         {name: 'MP4 video', type: 'video/mp4'},
         {name: 'Ogg video', type: 'video/ogg'},
-        {name: 'WebM video', type: 'video/webm'}
+        {name: 'WebM video', type: 'video/webm'},
+        {name: 'm3u8 video', type: 'application/x-mpegURL'}
     ];
 
     presenter.VIDEO_STATE = {
@@ -293,12 +322,12 @@ function Addonvideo_create() {
             $(presenter.videoContainer).css({
                 width: presenter.configuration.dimensions.container.width + 'px',
                 height: presenter.configuration.dimensions.container.height + 'px',
-                position: 'relative'
+                position: presenter.isHLS() ? 'absolute' : 'relative'
             });
             $(presenter.videoObject).css({
                 width: presenter.configuration.dimensions.video.width + 'px',
                 height: presenter.configuration.dimensions.video.height + 'px',
-                position: 'relative'
+                position: presenter.isHLS() ? 'absolute' : 'relative'
             });
 
             if (presenter.configuration.defaultControls) {
@@ -472,13 +501,24 @@ function Addonvideo_create() {
     }
 
     presenter.removeMathJaxHook = function () {
-        try {
-            if (MathJax) MathJax.Hub.signal.hooks["End Process"].Remove(presenter.mathJaxHook);
-        }catch(e){};
+        MathJax.Hub.signal.hooks["End Process"].Remove(presenter.mathJaxHook);
     };
 
     presenter.destroy = function () {
         var view = document.getElementsByClassName('ic_page');
+
+        if (presenter.hlsPlayer != null) {
+            presenter.hlsPlayer.off('click');
+            presenter.hlsPlayer.off('error');
+            presenter.hlsPlayer.off('loadedmetadata');
+            presenter.hlsPlayer.off('play');
+            presenter.hlsPlayer.off('pause');
+            presenter.hlsPlayer.off('playing');
+
+            presenter.hlsPlayer.off('canplay');
+            presenter.hlsPlayer.dispose();
+            presenter.hlsPlayer = null;
+        }
 
         if (presenter.configuration.defaultControls) {
             presenter.controlBar.destroy();
@@ -827,6 +867,7 @@ function Addonvideo_create() {
             "Ogg video": file['Ogg video'],
             "MP4 video": file['MP4 video'],
             "WebM video": file['WebM video'],
+            "m3u8 video": file['m3u8 video'],
             "Subtitles": file['Subtitles'],
             "Audiodescription": file['Audio Description'],
             "Poster": file['Poster'],
@@ -1060,6 +1101,7 @@ function Addonvideo_create() {
             presenter.buildControlsBars();
         } else {
             presenter.videoContainer.on("click", function () {
+                presenter.videoObject = presenter.videoContainer.find('video')[0];
                 if (presenter.videoObject.paused) {
                     presenter.play();
                 } else {
@@ -1069,6 +1111,8 @@ function Addonvideo_create() {
         }
 
         presenter.addTabindex(presenter.configuration.isTabindexEnabled);
+
+        if (presenter.isHLS()) presenter.loadHLSPlayer();
 
         presenter.connectHandlers();
         presenter.reload();
@@ -1087,19 +1131,19 @@ function Addonvideo_create() {
 
         presenter.videoObject.setAttribute('webkit-playsinline', 'webkit-playsinline');
         presenter.videoObject.setAttribute('playsinline', 'playsinline');
-
     };
 
     presenter.connectHandlers = function () {
-        presenter.videoObject.addEventListener('click', presenter.stopPropagationOnClickEvent);
-        presenter.videoObject.addEventListener('error', function () {
-            presenter.handleErrorCode(this.error);
-        }, true);
-        presenter.videoObject.addEventListener('loadedmetadata', presenter.setMetaDataOnMetaDataLoadedEvent);
-        presenter.videoObject.addEventListener('play', setVideoStateOnPlayEvent);
-        presenter.videoObject.addEventListener('pause', setVideoStateOnPauseEvent);
-        presenter.videoObject.addEventListener('playing', presenter.onVideoPlaying, false);
-
+        if (!presenter.isHLS()) {
+            presenter.videoObject.addEventListener('click', presenter.stopPropagationOnClickEvent);
+            presenter.videoObject.addEventListener('error', function () {
+                presenter.handleErrorCode(this.error);
+            }, true);
+            presenter.videoObject.addEventListener('loadedmetadata', presenter.setMetaDataOnMetaDataLoadedEvent);
+            presenter.videoObject.addEventListener('play', setVideoStateOnPlayEvent);
+            presenter.videoObject.addEventListener('pause', setVideoStateOnPauseEvent);
+            presenter.videoObject.addEventListener('playing', presenter.onVideoPlaying, false);
+        }
         $(document).on('webkitfullscreenchange mozfullscreenchange fullscreenchange MSFullscreenChange', presenter.fullscreenChangedEventReceived);
 
         MutationObserverService.createDestroyObserver(presenter.configuration.addonID, presenter.destroy, presenter.$view.get(0));
@@ -1119,24 +1163,62 @@ function Addonvideo_create() {
             event.stopPropagation();
         });
 
-        try{
-            $('#aidt_viewer-container').on('click', function (event) {
-                if (presenter.configuration.defaultControls && presenter.controlBar.isSelectorOpen) {
-                    presenter.controlBar.isSelectorOpen = false;
-                    presenter.controlBar.hideControls();
-                }
-                event.preventDefault();
-                event.stopPropagation();
+        $(window).on('click', function (event) {
+            if (presenter.configuration.defaultControls && presenter.controlBar.isSelectorOpen) {
+                presenter.controlBar.isSelectorOpen = false;
+                presenter.controlBar.hideControls();
+            }
+            event.preventDefault();
+            event.stopPropagation();
+        });
+    }
+
+    presenter.isHLS = function() {
+        if (window.videojs === undefined) return false;
+        if (presenter.isHLSValue == null) {
+            presenter.isHLSValue = false;
+            for (var i = 0; i < presenter.configuration.files.length; i++) {
+                var videoFile = presenter.configuration.files[i];
+                if (videoFile["m3u8 video"].trim().length > 0) presenter.isHLSValue = true;
+            }
+        }
+        return presenter.isHLSValue;
+    }
+
+    presenter.loadHLSPlayer = function() {
+        presenter.$videoObject.addClass('video-js vjs-theme-sea vjs-big-play-centered');
+        presenter.$videoObject.attr({
+            preload: presenter.isHLS() ? 'metadata' : 'auto',
+            fluid: "true",
+            "data-setup": '{}'
+        });
+        var videoID = 'videojs-player-' + presenter.configuration.addonID;
+        presenter.$videoObject.attr('id', videoID);
+        presenter.hlsPlayer = window.videojs(videoID);
+        presenter.hlsPlayer.ready(() => {
+            presenter.hlsPlayer.on('click', presenter.stopPropagationOnClickEvent);
+            presenter.hlsPlayer.on('error', function () {
+                presenter.handleErrorCode(this.error);
             });
-        }catch(e){};
-//        $(window).on('click', function (event) {
-//            if (presenter.controlBar.isSelectorOpen) {
-//                presenter.controlBar.isSelectorOpen = false;
-//                presenter.controlBar.hideControls();
-//            }
-//            event.preventDefault();
-//            event.stopPropagation();
-//        });
+            presenter.hlsPlayer.on('loadedmetadata', presenter.setMetaDataOnMetaDataLoadedEvent);
+            presenter.hlsPlayer.on('play', setVideoStateOnPlayEvent);
+            presenter.hlsPlayer.on('pause', setVideoStateOnPauseEvent);
+            presenter.hlsPlayer.on('playing', presenter.onVideoPlaying);
+
+            presenter.hlsPlayer.on('loadedmetadata', function onLoadedMetadata() {
+                presenter.isVideoLoaded = true;
+                presenter.callTasksFromDeferredQueue();
+
+                $(presenter.videoObject).unbind("canplay");
+
+                if (presenter.areSubtitlesHidden) {
+                    presenter.hideSubtitles();
+                } else {
+                    presenter.showSubtitles();
+                }
+                }
+            );
+        });
     }
 
     presenter.fullscreenChangedEventReceived = function () {
@@ -1194,9 +1276,6 @@ function Addonvideo_create() {
 
         var newVideoSize = presenter.getVideoSize(size, presenter.videoObject);
 
-//        console.log("scaleCaptionsContainerToVideoNewVideoSize scaleCaptionsContainerToVideoNewVideoSize width",  $(presenter.videoObject).width(), presenter.originalVideoSize.width);
-//        console.log("scaleCaptionsContainerToVideoNewVideoSize scaleCaptionsContainerToVideoNewVideoSize height",  $(presenter.videoObject).height(), presenter.originalVideoSize.height);
-
         var xScale = newVideoSize.width / presenter.originalVideoSize.width;
         var yScale = newVideoSize.height / presenter.originalVideoSize.height;
 
@@ -1225,8 +1304,6 @@ function Addonvideo_create() {
         var xScale = newVideoSize.width / presenter.originalVideoSize.width;
         var yScale = newVideoSize.height / presenter.originalVideoSize.height;
 
-//        console.log("scaleCaptionsContainerToScreenSize scaleCaptionsContainerToVideoNewVideoSize width",  $(presenter.videoObject).width(), presenter.originalVideoSize.width);
-//        console.log("scaleCaptionsContainerToScreenSize scaleCaptionsContainerToVideoNewVideoSize height",  $(presenter.videoObject).height(), presenter.originalVideoSize.height);
 
         presenter.$captionsContainer.css(generateTransformDict(xScale, yScale));
         presenter.captionsScale.xScale = xScale;
@@ -1248,42 +1325,6 @@ function Addonvideo_create() {
             'source': presenter.configuration.addonID,
             'item': (presenter.currentMovie + 1),
             'value': 'playing',
-            'score': ''
-        };
-
-        presenter.eventBus.sendEvent('ValueChanged', eventData);
-    };
-
-    //이석웅 추가
-    presenter.sendOnPlayingConfirmEvent = function () {
-        var eventData = {
-            'source': presenter.configuration.addonID,
-            'item': (presenter.currentMovie + 1),
-            'value': 'playing_confirm',
-            'score': ''
-        };
-
-        presenter.eventBus.sendEvent('ValueChanged', eventData);
-    };
-
-    //이석웅 추가
-    presenter.sendOnPauseEvent = function () {
-        var eventData = {
-            'source': presenter.configuration.addonID,
-            'item': (presenter.currentMovie + 1),
-            'value': 'pause',
-            'score': ''
-        };
-
-        presenter.eventBus.sendEvent('ValueChanged', eventData);
-    };
-
-    //이석웅 추가
-    presenter.sendOnStopEvent = function () {
-        var eventData = {
-            'source': presenter.configuration.addonID,
-            'item': (presenter.currentMovie + 1),
-            'value': 'stop',
             'score': ''
         };
 
@@ -1428,6 +1469,7 @@ function Addonvideo_create() {
     };
 
     function onTimeUpdate(video) {
+        if (!presenter.videoObject) return;
         if (!presenter.videoObject.paused) {
             var isSpeaking = presenter.readAudioDescriptions(presenter.videoObject.currentTime);
             if (!isSpeaking) {
@@ -1502,18 +1544,11 @@ function Addonvideo_create() {
     };
 
     presenter.setState = function (stateString) {
-
         if (ModelValidationUtils.isStringEmpty(stateString)) {
             return;
         }
-
         var state = JSON.parse(stateString);
-//        console.log("setState",state );
         var currentTime = state.currentTime;
-
-        try{
-            state.videoURLS = JSON.parse(state.videoURLS);
-        }catch(e){};
 
         if (state.videoURLS) {  //This was added later than rest of state
             for (var i in state.videoURLS) {
@@ -1533,7 +1568,8 @@ function Addonvideo_create() {
         presenter.currentMovie = state.currentMovie;
         presenter.reload();
 
-        $(presenter.videoObject).on('canplay', function onVideoCanPlay() {
+        var eventType = presenter.isHLS() ? 'loadedmetadata' : 'canplay';
+        $(presenter.videoObject).on(eventType, function onVideoCanPlay() {
             if (presenter.videoObject.currentTime < currentTime) {
                 presenter.currentTime = currentTime;
                 presenter.videoObject.currentTime = currentTime;
@@ -1655,6 +1691,10 @@ function Addonvideo_create() {
         }
 
         presenter.videoObject = presenter.videoContainer.find('video')[0];
+        if (!presenter.videoObject) return;
+        if (presenter.isHLS() && !!presenter.controlBar && !!presenter.controlBar.configuration) {
+            presenter.controlBar.configuration.videoObject = presenter.videoObject;
+        }
         if (!presenter.videoObject.hasOwnProperty('playing')) {
             Object.defineProperty(presenter.videoObject, 'playing', {
                get: function () {
@@ -1670,17 +1710,25 @@ function Addonvideo_create() {
         presenter.videoContainer.find('source').remove();
         presenter.addAttributePoster($video[0], files[presenter.currentMovie].Poster);
 
-        presenter.setAltText();
+        if (!presenter.isHLS()) presenter.setAltText();
         if (presenter.isPreview) {
             $video.attr('preload', 'none');
         } else {
-            $video.attr('preload', 'auto');
+            $video.attr('preload', presenter.isHLS() ? 'metadata' : 'auto');
+            var isNewHLSSourceSet = false;
             for (var vtype in presenter.videoTypes) {
-                if (files[presenter.currentMovie][presenter.videoTypes[vtype].name] && presenter.videoObject.canPlayType(presenter.videoTypes[vtype].type)) {
+                if (files[presenter.currentMovie][presenter.videoTypes[vtype].name] && (presenter.videoObject.canPlayType(presenter.videoTypes[vtype].type) || presenter.videoTypes[vtype].type == "application/x-mpegURL")) {
                     var source = $('<source>');
                     source.attr('type', presenter.videoTypes[vtype].type);
                     source.attr('src', files[presenter.currentMovie][presenter.videoTypes[vtype].name]);
                     $video.append(source);
+                    if (presenter.hlsPlayer != null && !isNewHLSSourceSet) {
+                        isNewHLSSourceSet = true;
+                        presenter.hlsPlayer.src({
+                            'type': presenter.videoTypes[vtype].type,
+                            'src': files[presenter.currentMovie][presenter.videoTypes[vtype].name]
+                        });
+                    }
                 }
             }
 
@@ -1898,63 +1946,22 @@ function Addonvideo_create() {
     presenter.setDimensions = function () {
         var video = presenter.getVideo();
 
-        var height = presenter.calculateVideoContainerHeight(presenter.videoContainer, presenter.configuration.height);
-        var width = presenter.configuration.width;
-        presenter.videoContainer.css('height', height + 'px');
-
+        presenter.videoContainer.css('height', presenter.calculateVideoContainerHeight(presenter.videoContainer, presenter.configuration.height) + 'px');
 
         video.css("width", "100%")
-            .attr('height', (presenter.videoContainer.height() == 100 )? height : presenter.videoContainer.height());
+            .attr('height', presenter.videoContainer.height());
 
-//        console.log("setDimensions", height, presenter.configuration.height, presenter.calculateVideoContainerHeight(presenter.videoContainer, presenter.configuration.height) )
-//        console.log("setDimensions2", $(video).height() );
-//        console.log("setDimensions3", $(presenter.videoContainer).height() );
-//        presenter.configuration.dimensions = {
-//            video: {
-//                width: width,
-//                height: height
-//            },
-//            container: {
-//                width: width,
-//                height: height
-//            }
-//        };
         presenter.configuration.dimensions = {
             video: {
-                width: ($(video).width() == 100 ) ? width : $(video).width(),
-                height: ($(video).height() == 100 ) ? height : $(video).height()
+                width: $(video).width(),
+                height: $(video).height()
             },
             container: {
-                width: ($(presenter.videoContainer).width() == 100) ? width : $(presenter.videoContainer).width(),
-                height: ($(presenter.videoContainer).height() == 100 ) ? height : $(presenter.videoContainer).height()
+                width: $(presenter.videoContainer).width(),
+                height: $(presenter.videoContainer).height()
             }
         };
     };
-
-//    presenter.setDimensions = function () {
-//        var video = presenter.getVideo();
-//
-//        var height = presenter.calculateVideoContainerHeight(presenter.videoContainer, presenter.configuration.height);
-//        presenter.videoContainer.css('height', presenter.calculateVideoContainerHeight(presenter.videoContainer, presenter.configuration.height) + 'px');
-//
-//
-//        video.css("width", "100%")
-//            .attr('height', presenter.videoContainer.height());
-//
-//        console.log("setDimensions", presenter.videoContainer, presenter.configuration.height, presenter.calculateVideoContainerHeight(presenter.videoContainer, presenter.configuration.height) )
-//        console.log("setDimensions2", $(video).height() );
-//        console.log("setDimensions3", $(presenter.videoContainer).height() );
-//        presenter.configuration.dimensions = {
-//            video: {
-//                width: $(video).width(),
-//                height: $(video).height()
-//            },
-//            container: {
-//                width: $(presenter.videoContainer).width(),
-//                height: $(presenter.videoContainer).height()
-//            }
-//        };
-//    };
 
     presenter.showSubtitles = function () {
         presenter.$view.find('.captions:not(.audio-description)').show();
@@ -2172,7 +2179,7 @@ function Addonvideo_create() {
         presenter.removeWaterMark();
         presenter.hidePlayButton();
         presenter.loadVideoAtPlayOnMobiles();
-
+        presenter.videoObject = presenter.videoContainer.find('video')[0];
         if (presenter.videoObject.paused) {
             presenter.videoObject.play();
             presenter.addClassToView('playing');
@@ -2180,23 +2187,6 @@ function Addonvideo_create() {
         presenter.usedStop = false;
         presenter.playTriggered = true;
     });
-
-//    presenter.play = deferredSyncQueue.decorate(function () {
-//        presenter.sendOnPlayingConfirmEvent();
-//    });
-//
-//     presenter.DoPlay = deferredSyncQueue.decorate(function () {
-//        presenter.removeWaterMark();
-//        presenter.hidePlayButton();
-//        presenter.loadVideoAtPlayOnMobiles();
-//
-//        if (presenter.videoObject.paused) {
-//            presenter.videoObject.play();
-//            presenter.addClassToView('playing');
-//        }
-//        presenter.usedStop = false;
-//        presenter.playTriggered = true;
-//    });
 
     presenter.stop = deferredSyncQueue.decorate(function () {
             presenter.showPlayButton();

@@ -204,19 +204,17 @@ function AddonShow_Answers_create(){
     };
 
     presenter.destroy = function (event) {
-        if (event != null && event.target !== presenter.view) {
+        if (event.target !== presenter.view) {
             return;
         }
 
-        try {
-            presenter.$button.off();
-            presenter.$view.off();
+        presenter.$button.off();
+        presenter.$view.off();
 
-            presenter.$button = null;
-            presenter.$wrapper = null;
-            presenter.$view = null;
-            presenter.view = null;
-        }catch(e){};
+        presenter.$button = null;
+        presenter.$wrapper = null;
+        presenter.$view = null;
+        presenter.view = null;
     };
 
     presenter.setVisibility = function (isVisible) {

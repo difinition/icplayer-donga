@@ -496,7 +496,6 @@ function AddonAnimation_create (){
     });
 
     presenter.stop = deferredSyncQueue.decorate(function() {
-        // console.log("stop");
         $(presenter.DOMElements.preview).show();
         $(presenter.DOMElements.animation).hide();
         presenter.configuration.animationState = presenter.ANIMATION_STATE.STOPPED;
@@ -582,7 +581,6 @@ function AddonAnimation_create (){
     };
 
     presenter.run = function(view, model){
-//        console.log("anim", model);
         presenterLogic(view, model, false);
     };
 
@@ -768,12 +766,6 @@ function AddonAnimation_create (){
     // L_03 - 'Left' value invalid
     // L_04 - Label empty
     presenter.validateLabels = function(labelsArray, framesCount) {
-        // 이석웅 추가
-        for (var i = 0; i  < labelsArray.length; i++) {
-            var obj = labelsArray[i];
-            if( obj.pageURL != undefined ) delete obj.pageURL;
-        };
-
         var labels = { count: 0, content: [] };
 
         if (ModelValidationUtils.isArrayEmpty(labelsArray)) {

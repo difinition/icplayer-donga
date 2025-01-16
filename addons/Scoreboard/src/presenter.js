@@ -738,7 +738,7 @@ function AddonScoreboard_create() {
     };
 
     presenter.destroy = function Scoreboard_destroy (event) {
-        if (event != null && event.target !== presenter.view) { return; }
+        if (event.target !== presenter.view) { return; }
 
         if(presenter.teamsObjects) {
             presenter.removeAllTeams();

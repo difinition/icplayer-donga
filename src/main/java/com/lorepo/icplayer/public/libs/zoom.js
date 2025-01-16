@@ -181,16 +181,15 @@ zoom = (function(){
 
             var elementToZoom = getElementToBeZoomed(options);
 
-            if( supportsTransforms ) {
+            if( isSupportsTransforms(elementToZoom) ) {
                 // The easing that will be applied when we zoom in/out
-                document.body.style.transition = 'transform '+ TRANSITION_DURATION +'ms ease';
-                document.body.style.OTransition = '-o-transform '+ TRANSITION_DURATION +'ms ease';
-                document.body.style.msTransition = '-ms-transform '+ TRANSITION_DURATION +'ms ease';
-                document.body.style.MozTransition = '-moz-transform '+ TRANSITION_DURATION +'ms ease';
-                document.body.style.WebkitTransition = '-webkit-transform '+ TRANSITION_DURATION +'ms ease';
+                elementToZoom.style.transition = 'transform '+ TRANSITION_DURATION +'ms ease';
+                elementToZoom.style.OTransition = '-o-transform '+ TRANSITION_DURATION +'ms ease';
+                elementToZoom.style.msTransition = '-ms-transform '+ TRANSITION_DURATION +'ms ease';
+                elementToZoom.style.MozTransition = '-moz-transform '+ TRANSITION_DURATION +'ms ease';
+                elementToZoom.style.WebkitTransition = '-webkit-transform '+ TRANSITION_DURATION +'ms ease';
             }
         },
-
 
         destroy: function () {
             document.removeEventListener('keyup', keyupHandler);
@@ -203,9 +202,13 @@ zoom = (function(){
             if( level !== 1 ) {
                 this.out();
             } else {
+
+                lastZoomedElement = getElementToBeZoomed(options);
+
                 options.x = options.x || 0;
                 options.y = options.y || 0;
                 options.topWindowHeight = options.topWindowHeight || 0;
+                options.topWindowWidth = options.topWindowWidth || 0;
                 options.iframeTopOffset = options.iframeTopOffset || 0;
 
                 // If an element is set, that takes precedence
@@ -224,12 +227,16 @@ zoom = (function(){
                 if (options.topWindowHeight > 0) {
                     innerHeight = options.topWindowHeight;
                 }
+                var innerWidth = window.innerWidth;
+                if (options.topWindowWidth > 0) {
+                    innerWidth = options.topWindowWidth;
+                }
 
                 // If width/height values are set, calculate scale from those values
                 if ( options.width !== undefined && options.height !== undefined ) {
-                    options.scale = Math.max( Math.min( window.innerWidth / options.width, innerHeight / options.height ), 1 );
-                    if(Math.min( window.innerWidth / options.width, innerHeight / options.height ) <= 1){
-                        options.scale = Math.min( window.innerWidth / options.width, innerHeight / options.height )+1;
+                    options.scale = Math.max( Math.min( innerWidth / options.width, innerHeight / options.height ), 1 );
+                    if(Math.min( innerWidth / options.width, innerHeight / options.height ) <= 1){
+                        options.scale = Math.min( innerWidth / options.width, innerHeight / options.height )+1;
                     }
                 }
 

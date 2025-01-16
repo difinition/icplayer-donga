@@ -363,13 +363,15 @@ function AddonParagraph_create() {
         const parsedData = JSON.parse(data.replace(`EXTERNAL_${userAnswerAIReviewResponse}:`, '').trim());
         const pageID = parsedData.page_id;
         const activityID = parsedData.activity_id;
-        const grade = parsedData.ai_grade;
+        const aiGrade = parsedData.ai_grade;
+        const aiRelevance = parsedData.ai_relevance;
 
         OpenActivitiesUtils.updateOpenActivityScore(
             presenter.playerController,
             pageID,
             activityID,
-            grade
+            aiGrade,
+            aiRelevance
         );
     };
 
@@ -414,6 +416,7 @@ function AddonParagraph_create() {
         presenter.loaded = true;
         presenter.view = view;
         presenter.$view = $(view);
+        presenter.isPreview = isPreview;
         var upgradedModel = presenter.upgradeModel(model);
         presenter.model = upgradedModel;
         presenter.configuration = presenter.validateModel(upgradedModel, isPreview);
@@ -432,7 +435,6 @@ function AddonParagraph_create() {
 
         if (presenter.playerController) {
             var paragraphInitDelay = presenter.playerController.getExternalVariable('paragraphInitDelay');
-            if( paragraphInitDelay == null ) paragraphInitDelay = "100";
             if (paragraphInitDelay.length == 0 || isNaN(paragraphInitDelay)) {
                 presenter.initTinymce();
             } else {
@@ -444,15 +446,45 @@ function AddonParagraph_create() {
         }
     };
 
-    presenter.initTinymce = function() {
+    presenter.initTinymce = function () {
         if (!document.body.contains(presenter.view)) {
             return;
         }
+        if (presenter.isPreview || !presenter.configuration.useCustomCSSFiles || !presenter.configuration.content_css) {
+            presenter.initTinymceWithoutParsingContentCSS();
+        } else {
+            presenter.initTinymceWithParsingContentCSS();
+        }
+    };
+
+    presenter.initTinymceWithoutParsingContentCSS = function () {
+        _initTinymce(presenter.configuration.content_css);
+    };
+
+    presenter.initTinymceWithParsingContentCSS = function () {
+        presenter.$view.css("visibility", "hidden");
+        URLUtils.parseCSSFile(presenter.playerController, presenter.configuration.content_css)
+            .then((newCSSText) => {
+                const newCSS = new File(
+                    [newCSSText],
+                    `parsed ${presenter.configuration.content_css}.css`,
+                    {type: "text/css"}
+                );
+                return URL.createObjectURL(newCSS);
+            })
+            .then((contentCSSURL) => {
+                _initTinymce(contentCSSURL);
+            }).catch(() => {
+                console.warn(`Failed to download assets provided in "Custom CSS" file for Paragraph ${presenter.configuration.ID} addon`);
+            });
+    };
+
+    function _initTinymce(contentCSSURL) {
         presenter.placeholder = new presenter.placeholderElement();
         presenter.configuration.plugins = presenter.getPlugins();
         presenter.addPlugins();
 
-        tinymce.init(presenter.getTinymceInitConfiguration(presenter.getTinyMceSelector())).then(function (editors) {
+        tinymce.init(presenter.getTinymceInitConfiguration(presenter.getTinyMceSelector(), contentCSSURL)).then(function (editors) {
             presenter.editor = editors[0];
             presenter.onInit();
 
@@ -492,7 +524,7 @@ function AddonParagraph_create() {
         return '#' + presenter.configuration.ID + '-wrapper .paragraph_field';
     };
 
-    presenter.getTinymceInitConfiguration = function AddonParagraph_getTinyMceConfiguration(selector) {
+    presenter.getTinymceInitConfiguration = function AddonParagraph_getTinyMceConfiguration(selector, contentCSSURL) {
         var layoutType = presenter.configuration.layoutType;
 
         var language = layoutType === "Default"
@@ -515,7 +547,7 @@ function AddonParagraph_create() {
             statusbar: false,
             menubar: false,
             toolbar: toolbar,
-            content_css: presenter.configuration.content_css,
+            content_css: contentCSSURL,
             setup: presenter.setup,
             language: language
         };
@@ -649,6 +681,7 @@ function AddonParagraph_create() {
             hasDefaultFontFamily: hasDefaultFontFamily,
             hasDefaultFontSize: hasDefaultFontSize,
             content_css: model['Custom CSS'],
+            useCustomCSSFiles: ModelValidationUtils.validateBoolean(model["useCustomCSSFiles"]),
             isPlaceholderSet: !ModelValidationUtils.isStringEmpty(model["Placeholder Text"]),
             placeholderText: model["Placeholder Text"],
             pluginName: presenter.makePluginName(model["ID"]),
@@ -712,7 +745,8 @@ function AddonParagraph_create() {
         upgradedModel = presenter.upgradeEditablePlaceholder(upgradedModel);
         upgradedModel = presenter.upgradeLangTag(upgradedModel);
         upgradedModel = presenter.upgradeBlockInErrorCheckingMode(upgradedModel);
-        return presenter.upgradeSpeechTexts(upgradedModel);
+        upgradedModel = presenter.upgradeSpeechTexts(upgradedModel);
+        return presenter.upgradeUseCustomCSSFiles(upgradedModel);
     };
 
     presenter.upgradeManualGrading = function (model) {
@@ -779,6 +813,10 @@ function AddonParagraph_create() {
         }
 
         return upgradedModel;
+    };
+
+    presenter.upgradeUseCustomCSSFiles = function (model) {
+        return presenter.upgradeAttribute(model, "useCustomCSSFiles", "False");
     };
 
     presenter.upgradeAttribute = function (model, attrName, defaultValue) {
@@ -1251,20 +1289,17 @@ function AddonParagraph_create() {
     }
 
     presenter.reset = function AddonParagraph_reset() {
-        try{
-            presenter.setVisibility(presenter.configuration.isVisible);
-            presenter.placeholder.removePlaceholder();
-            if (presenter.configuration.isPlaceholderEditable) {
-                presenter.setText(presenter.configuration.placeholderText);
-            } else {
-                presenter.editor.setContent('');
-                presenter.setStyles();
-            }
-            presenter.placeholder.addPlaceholder();
-            if (presenter.isLocked) {
-                presenter.unlock();
-            }
-        }catch(e){
+        presenter.setVisibility(presenter.configuration.isVisible);
+        presenter.placeholder.removePlaceholder();
+        if (presenter.configuration.isPlaceholderEditable) {
+            presenter.setText(presenter.configuration.placeholderText);
+        } else {
+            presenter.editor.setContent('');
+            presenter.setStyles();
+        }
+        presenter.placeholder.addPlaceholder();
+        if (presenter.isLocked) {
+            presenter.unlock();
         }
     };
 

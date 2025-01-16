@@ -8,7 +8,8 @@ TestCase("[Coloring] Model validation", {
             'Width' : '500',
             'Height' : '500',
             'Tolerance' : '50',
-            'DefaultFillingColor' : ''
+            'DefaultFillingColor' : '',
+            'Image' : '/file/serve/4834816278659072'
         };
         this.isPreview = false;
     },
@@ -86,7 +87,6 @@ TestCase("[Coloring] Model validation", {
         var validated = this.presenter.validateModel(this.model, this.isPreview);
         assertEquals(false, validated.isError);
     }
-
 });
 
 TestCase("[Coloring] Transparent areas validation", {

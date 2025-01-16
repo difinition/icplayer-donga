@@ -124,8 +124,8 @@ function AddonAudio_create(){
         if (presenter.configuration.displayTime) {
             AddonAudio_displayTimer(0, duration);
         }
-        if (presenter.configuration.isHtmlPlayer && !presenter.configuration.useBrowserControls){
-            if(presenter.$playerTime) presenter.$playerTime.html('0:00 / ' + addonAudio_formatTime(duration))
+        if (presenter.configuration.isHtmlPlayer){
+            presenter.$playerTime.html('0:00 / ' + addonAudio_formatTime(duration))
         }
 
 
@@ -157,13 +157,12 @@ function AddonAudio_create(){
         if (presenter.configuration.displayTime) {
             AddonAudio_displayTimer(currentTime, duration);
         }
-        if (presenter.configuration.isHtmlPlayer && !presenter.configuration.useBrowserControls){
-            if( presenter.$playerTime ) presenter.$playerTime.html(addonAudio_formatTime(currentTime) + ' / ' + addonAudio_formatTime(duration));
-            if( presenter.$progressWrapper ) bar_width = presenter.$progressWrapper.width() * currentTime / duration;
-            if( presenter.$progressBar ) presenter.$progressBar.width(Math.round(bar_width));
-            if( presenter.$progressSlider ) presenter.$progressSlider.css('left', Math.round(bar_width));
+        if (presenter.configuration.isHtmlPlayer){
+            presenter.$playerTime.html(addonAudio_formatTime(currentTime) + ' / ' + addonAudio_formatTime(duration));
+            bar_width = presenter.$progressWrapper.width() * currentTime / duration;
+            presenter.$progressBar.width(Math.round(bar_width));
+            presenter.$progressSlider.css('left', Math.round(bar_width));
         }
-
     }
 
     function AddonAudio_change_volume_class(volume_class) {
@@ -179,7 +178,7 @@ function AddonAudio_create(){
     }
 
     function AddonAudio_onVolumeChanged() {
-        if (presenter.configuration.isHtmlPlayer && !presenter.configuration.useBrowserControls){
+        if (presenter.configuration.isHtmlPlayer){
             var volume = presenter.audio.volume,
                 volume_class = '';
             presenter.$volumeControl.css('left', volume * presenter.$volumeLayer.width());
@@ -202,15 +201,6 @@ function AddonAudio_create(){
     function AddonAudio_playPauseCallback () {
         if (presenter.$playPauseBtn.hasClass('audio-pause-btn')) {
             presenter.pause();
-        }
-        else {
-            presenter.play();
-        }
-    }
-
-    function AddonAudio_playStopCallback () {
-        if (presenter.$playPauseBtn.hasClass('audio-pause-btn2')) {
-            presenter.stop();
         }
         else {
             presenter.play();
@@ -330,88 +320,76 @@ function AddonAudio_create(){
     function AddonAudio_createHtmlPlayer() {
         presenter.$customPlayer = $('<div>').
             addClass('audioplayer');
-        if (!presenter.configuration.useBrowserControls && presenter.configuration.enablePlaybackSpeedControls) {
+        if (presenter.configuration.enablePlaybackSpeedControls) {
             presenter.$customPlayer.addClass('playback-speed-control-enabled');
         }
 
-        if( !presenter.configuration.useBrowserControls){
-            presenter.$playPauseBtn = $('<div>').
-                addClass('play-pause-btn').
-                addClass('audio-play-btn').
-                on('click', AddonAudio_playPauseCallback);
-        }else{
-            presenter.$playPauseBtn = $('<div>').
-                addClass('play-pause-btn2').
-                addClass('audio-play-btn2').
-                on('click', AddonAudio_playStopCallback);
-
-             presenter.$view.css("background-color", "transparent");
-        }
+        presenter.$playPauseBtn = $('<div>').
+            addClass('play-pause-btn').
+            addClass('audio-play-btn').
+            on('click', AddonAudio_playPauseCallback);
 
         presenter.$customPlayer.append(presenter.$playPauseBtn);
 
-        if( !presenter.configuration.useBrowserControls ){
+        presenter.$stopBtn = $('<div>').
+            addClass('audio-stop-btn').
+            on('click', presenter.stop);
 
-           presenter.$stopBtn = $('<div>').
-                addClass('audio-stop-btn').
-                on('click', presenter.stop);
+        presenter.$customPlayer.append(presenter.$stopBtn);
 
-            presenter.$customPlayer.append(presenter.$stopBtn);
+        presenter.$progressWrapper = $('<div>').
+            addClass('audio-progress-bar');
 
-            presenter.$progressWrapper = $('<div>').
-                addClass('audio-progress-bar');
+        presenter.$progressBar = $('<div>').
+            addClass('audio-bar');
 
-            presenter.$progressBar = $('<div>').
-                addClass('audio-bar');
+        presenter.$progressSlider = $('<div>').
+            addClass('audio-slider-btn');
 
-            presenter.$progressSlider = $('<div>').
-                addClass('audio-slider-btn');
+        AddonAudio_attachProgressListeners();
 
-            AddonAudio_attachProgressListeners();
+        presenter.$progressWrapper.
+            append(presenter.$progressBar).
+            append(presenter.$progressSlider);
 
-            presenter.$progressWrapper.
-                append(presenter.$progressBar).
-                append(presenter.$progressSlider);
+        presenter.$customPlayer.append(presenter.$progressWrapper);
 
-            presenter.$customPlayer.append(presenter.$progressWrapper);
+        if (!MobileUtils.isSafariMobile(navigator.userAgent)) {
+            presenter.$volumeBtn = $('<div>').
+                addClass('audio-volume-btn').
+                on('click', AddonAudio_toogleVolumeLayer);
 
-            if (!MobileUtils.isSafariMobile(navigator.userAgent)) {
-                presenter.$volumeBtn = $('<div>').
-                    addClass('audio-volume-btn').
-                    on('click', AddonAudio_toogleVolumeLayer);
+            presenter.$customPlayer.append(presenter.$volumeBtn);
 
-                presenter.$customPlayer.append(presenter.$volumeBtn);
+            presenter.$volumeControlBackground = $('<div>').addClass('volume-control-background');
+            presenter.$volumeControl = $('<div>').addClass('audio-volume-control');
 
-                presenter.$volumeControlBackground = $('<div>').addClass('volume-control-background');
-                presenter.$volumeControl = $('<div>').addClass('audio-volume-control');
+            presenter.$volumeLayer = $('<div>').
+                addClass('audio-volume-layer').
+                append(presenter.$volumeControlBackground).
+                append(presenter.$volumeControl).
+                on('click', function (e) {
+                presenter.audio.volume = e.offsetX / $(this).width();
+            });
 
-                presenter.$volumeLayer = $('<div>').
-                    addClass('audio-volume-layer').
-                    append(presenter.$volumeControlBackground).
-                    append(presenter.$volumeControl).
-                    on('click', function (e) {
-                    presenter.audio.volume = e.offsetX / $(this).width();
-                });
+            presenter.$volumeLayer.hide();
 
-                presenter.$volumeLayer.hide();
+            presenter.$customPlayer.append(presenter.$volumeLayer);
+        }
 
-                presenter.$customPlayer.append(presenter.$volumeLayer);
-            }
+        presenter.$playbackRateControls = null;
+        if (presenter.configuration.enablePlaybackSpeedControls) {
+            presenter.$playbackRateControls = $('<div>');
+            presenter.$playbackRateControls.addClass('audio-playback-rate');
+            presenter.$playbackRateControls.append(createPlaybackRateSelectElement());
+            displayPlaybackRate();
+            presenter.$customPlayer.append(presenter.$playbackRateControls);
+        }
 
-            presenter.$playbackRateControls = null;
-            if (presenter.configuration.enablePlaybackSpeedControls) {
-                presenter.$playbackRateControls = $('<div>');
-                presenter.$playbackRateControls.addClass('audio-playback-rate');
-                presenter.$playbackRateControls.append(createPlaybackRateSelectElement());
-                displayPlaybackRate();
-                presenter.$customPlayer.append(presenter.$playbackRateControls);
-            }
-
-            presenter.$playerTime = $('<div>').
-                addClass('player-time').
-                text('00:00 / --:--');
-            presenter.$customPlayer.append(presenter.$playerTime);
-        };
+        presenter.$playerTime = $('<div>').
+            addClass('player-time').
+            text('00:00 / --:--');
+        presenter.$customPlayer.append(presenter.$playerTime);
 
         presenter.$customPlayer.on('click mousedown mouseup', function(event){
             event.stopPropagation();
@@ -464,14 +442,7 @@ function AddonAudio_create(){
     }
 
     function AddonAudio_createView(view, model, isPreview){
-//        if( presenter.configuration.isHtmlPlayer && !presenter.configuration.useBrowserControls ){
-//            presenter.$audioWrapper = presenter.$view.find(".wrapper-addon-audio");
-//        }else{
-//            presenter.$audioWrapper = presenter.$view.find(".wrapper-addon-audio-only-play");
-//        }
-
         presenter.$audioWrapper = presenter.$view.find(".wrapper-addon-audio");
-
 
         mp3File = model.mp3;
         oggFile = model.ogg;
@@ -669,7 +640,6 @@ function AddonAudio_create(){
 
         presenter.view = view;
         presenter.$view = $(view);
-        presenter.view.addEventListener('DOMNodeRemoved', presenter.destroy);
         presenter.configuration = presenter.validateModel(upgradedModel);
 
         AddonAudio_createView(view, upgradedModel, isPreview);
@@ -679,18 +649,18 @@ function AddonAudio_create(){
             presenter.$view.bind('click', function (event) {
                 event.stopPropagation();
             });
+            MutationObserverService.createDestroyObserver(presenter.configuration.addonID, presenter.destroy, presenter.view);
+            MutationObserverService.setObserver();
         }
 
     };
 
     presenter.destroy = function AddonAudio_destroy (event) {
-        if (event != null && event.target !== presenter.view) {
+        if (event.target != presenter.view) {
             return;
         }
 
         presenter.audio.pause();
-
-        presenter.view.removeEventListener('DOMNodeRemoved', presenter.destroy);
 
         presenter.playerController = null;
 
@@ -762,7 +732,7 @@ function AddonAudio_create(){
             displayTime: ModelValidationUtils.validateBoolean(model.displayTime),
             defaultControls: defaultControls,
             useBrowserControls: useBrowserControls,
-            isHtmlPlayer: true,
+            isHtmlPlayer: defaultControls && !useBrowserControls,
             addonID: model.ID,
             forceLoadAudio: ModelValidationUtils.validateBoolean(model.forceLoadAudio),
             narration: model.Narration,
@@ -796,20 +766,9 @@ function AddonAudio_create(){
             }
             presenter.audio.play();
             if (presenter.configuration.isHtmlPlayer) {
-                if( !presenter.configuration.useBrowserControls ){
-                        console.log("presenter.$playPause", presenter.$playPause);
-                        try{
-                            presenter.$playPauseBtn.
-                                removeClass('audio-play-btn').
-                                addClass('audio-pause-btn');
-                        }catch(e){};
-                }else{
-                    try{
-                        presenter.$playPauseBtn.
-                            removeClass('audio-play-btn2').
-                            addClass('audio-pause-btn2');
-                    }catch(e){};
-                };
+                presenter.$playPauseBtn.
+                    removeClass('audio-play-btn').
+                    addClass('audio-pause-btn');
             }
         }
     });
@@ -821,19 +780,9 @@ function AddonAudio_create(){
                 presenter.audio.pause();
             }
             if (presenter.configuration.isHtmlPlayer) {
-                if( !presenter.configuration.useBrowserControls ){
-                    try{
-                        presenter.$playPauseBtn.
-                            removeClass('audio-pause-btn').
-                            addClass('audio-play-btn');
-                    }catch(e){};
-                }else{
-                    try{
-                        presenter.$playPauseBtn.
-                            removeClass('audio-pause-btn2').
-                            addClass('audio-play-btn2');
-                    }catch(e){};
-                }
+                presenter.$playPauseBtn.
+                    removeClass('audio-pause-btn').
+                    addClass('audio-play-btn');
             }
         }
     });

@@ -229,7 +229,7 @@ function AddonBlocklyCodeEditor_create () {
     };
 
     presenter.destroy = function Blockly_destroy_function (event) {
-        if (event != null && event.target !== presenter.view) { return; }
+        if (event.target !== presenter.view) { return; }
 
         var key, i;
         if (presenter.configuration.isPreview) {

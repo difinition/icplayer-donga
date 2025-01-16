@@ -722,8 +722,7 @@ function AddonFlashCards_create(){
     presenter.setState = function (stateString) {
         if (ModelValidationUtils.isStringEmpty(stateString)) return;
         var parsedState = JSON.parse(stateString);
-//        presenter.state = parsedState.state;
-        presenter.state = JSON.parse(parsedState.state);
+        presenter.state = parsedState.state;
 
         presenter.updateVisibility();
         if (presenter.configuration.randomizeOrder) {

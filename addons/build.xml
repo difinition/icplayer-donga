@@ -6,9 +6,9 @@
 	<property name="addons.list.temp.file" value="addons.list.temp" />
 
     <target name="build-webpack" description="Install node dependencies for gulp and less">
-        <!--<exec executable="python" failonerror="true">
+        <exec executable="python" failonerror="true">
             <arg value="tools/build-webpack.py"/>
-        </exec>-->
+        </exec>
     </target>
 
 	<target name="copy" depends="build-webpack">

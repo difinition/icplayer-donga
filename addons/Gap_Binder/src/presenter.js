@@ -704,7 +704,7 @@ function AddonGap_Binder_create() {
     }
 
     presenter.destroy = function (event) {
-        if (event != null && event.target !== presenter.view) {
+        if (event.target !== presenter.view) {
             return;
         }
         presenter.hideAnswers();

@@ -137,7 +137,7 @@ function AddonMedia_Recorder_create() {
     };
 
     presenter.destroy = function destroy(event) {
-        if (event == null || event.target === presenter.view) {
+        if (event.target === presenter.view) {
             presenter.mediaRecorder.destroy();
             event.target = null;
             presenter.mediaRecorder = null;

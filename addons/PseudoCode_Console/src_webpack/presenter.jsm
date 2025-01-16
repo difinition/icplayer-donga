@@ -304,7 +304,7 @@ function AddonPseudoCode_Console_create() {
     };
 
     presenter.destroy = function presenter_destroy (event) {
-        if (event != null && event.target !== presenter.state.view) {
+        if (event.target !== presenter.state.view) {
             return;
         }
 

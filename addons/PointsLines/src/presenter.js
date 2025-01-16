@@ -11,9 +11,6 @@ function AddonPointsLines_create() {
     presenter.speechTexts = null;
     presenter.keyboardControllerObject = null;
 
-    presenter.clickedPoint = -1;
-    presenter.lastDrawTime = -1;
-
     presenter.ERROR_CODES = {
         'PE' : 'Points coordinates incorrect!',
         'PO' : 'Points outside the addon!',

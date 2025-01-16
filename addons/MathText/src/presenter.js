@@ -284,7 +284,7 @@ function AddonMathText_create() {
     };
 
     presenter.destroy = function AddonMathText_removeHandler (event) {
-        if (event != null && event.target !== presenter.view) {
+        if (event.target !== presenter.view) {
             return;
         }
 

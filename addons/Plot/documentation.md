@@ -1,4 +1,4 @@
-##Description
+## Description
 Plot drawing/exercise module allows users to present plots and make plot/points based activities. Plot enables to draw functions f(x) and f(y).
 
 Addon may work in 4 modes:

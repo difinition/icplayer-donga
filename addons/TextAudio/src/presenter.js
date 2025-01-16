@@ -1283,7 +1283,7 @@ function AddonTextAudio_create() {
     };
 
     presenter.destroy = function AddonTextAudio_destroy (event) {
-        if (event != null && event.target !== presenter.view) {
+        if (event.target !== presenter.view) {
             return;
         }
 

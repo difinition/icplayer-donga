@@ -1499,18 +1499,6 @@ function AddonConnection_create() {
 
         const contentWrapper = document.createElement("div");
         contentWrapper.classList.add(presenter.CSS_CLASSES.INNER_WRAPPER);
-
-        //리소스가 상대 경우인경우 도메인 경로 붙여주시
-        try{
-            var contentLower = content.toLowerCase();
-            if( contentLower.indexOf("<img") > -1 && contentLower.indexOf("http") < 0){
-                var src = content.slice(content.indexOf("src")).split('"')[1];
-                console.log("content23423432", src);
-                content = content.replace(src, presenter.model.pageURL + src);
-            }
-        }catch(e){
-        }
-
         contentWrapper.style.direction = isRTL ? "rtl" : "ltr";
         contentWrapper.innerHTML = content;
         !!additionalClassName && contentWrapper.classList.add(additionalClassName);
@@ -1858,11 +1846,6 @@ function AddonConnection_create() {
         return score;
     };
 
-//    presenter.disable = function () {
-//        console.log("connection disable");
-//
-//    });
-
     presenter.gradualShowAnswers = function (itemIndex) {
         presenter.keyboardControllerObject.selectEnabled(false);
         presenter.addCurrentAnswersToTemporary();
@@ -2152,23 +2135,16 @@ function AddonConnection_create() {
     };
 
     presenter.disableCommand = function (params) {
-        // 이석웅 추가
-//        if( params == null || params.length === 0 ) isSelectionPossible = false;
-
         if (params.length === 2) {
             presenter.disable(params[0], params[1]);
         }
     };
 
     presenter.disable = function (id1, id2) {
-//        console.log("disable", id1, id2);
         presenter.disabledConnections.push({id1: id1, id2: id2});
     };
 
     presenter.enableCommand = function (params) {
-        // 이석웅 추가
-//        if( params == null || params.length === 0 ) isSelectionPossible = true;
-
         if (params.length === 2) {
             presenter.enable(params[0], params[1]);
         }

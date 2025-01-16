@@ -53,7 +53,7 @@ function AddonExternal_Link_Button_create() {
     presenter.createElements = function (wrapper) {
         var $ahref = $(document.createElement('a'));
         presenter.$ahref = $ahref;
-        $ahref.attr('href',decodeURIComponent(presenter.configuration.URI));
+        $ahref.attr('href',presenter.configuration.URI);
 
         switch(true) {
             case (presenter.configuration.targetType == 'Blank'):
@@ -181,7 +181,7 @@ function AddonExternal_Link_Button_create() {
         	isValid: true,
             title: model.Title,
             image: image.value,
-            URI: decodeURIComponent(model.URI.trim()).trim(),
+            URI: model.URI.trim(),
             isVisible: isVisible,
             isVisibleByDefault: isVisible,
             targetType: model['targetType']

@@ -1363,8 +1363,6 @@ function AddonLine_Number_create() {
             presenter.checkedPoints = parsedState.points;
             drawPoints(presenter.checkedPoints);
         } else {
-            // 이석웅 추가
-            parsedState.drawnRangesData = JSON.parse(parsedState.drawnRangesData);
             presenter.redrawRanges(parsedState.drawnRangesData.ranges);
         }
         presenter.configuration.isCurrentlyVisible = parsedState.isVisible;

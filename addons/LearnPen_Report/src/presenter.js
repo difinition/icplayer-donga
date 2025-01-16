@@ -455,7 +455,7 @@ function AddonLearnPen_Report_create() {
     }
 
     presenter.destroy = function (event) {
-        if (event != null && event.target !== presenter.view) { return; }
+        if (event.target !== presenter.view) { return; }
 
         if (presenter.data.isIntervalOn) {
             clearInterval(presenter.data.intervalId);

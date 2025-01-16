@@ -33,22 +33,6 @@
         }
     };
 
-
-    /**
-     Returns Presentation object
-     @method getPresentation
-
-     @return {Object} current presentation
-     */
-    window.PlayerUtils.prototype.getPresentations = function getPresentations() {
-        if (this.hasOwnProperty("playerServices")) {
-            return this.playerServices.getPresentation();
-        }
-        else {
-            return undefined;
-        }
-    };
-
 /**
      Returns Presentation object
 
@@ -60,7 +44,7 @@
      */
     window.PlayerUtils.prototype.getPresentationScore = function(presentation) {
         return this.getPresentationScoreBase(presentation, false);
-    }
+    };
 
 /**
      Returns Presentation score object, including non reportable pages
@@ -74,7 +58,7 @@
      */
     window.PlayerUtils.prototype.getFullPresentationScore = function(presentation) {
         return this.getPresentationScoreBase(presentation, true);
-    }
+    };
 
     window.PlayerUtils.prototype.getPresentationScoreBase = function(presentation, includeNonReportable) {
         if (this.hasOwnProperty('scoreService')) {
@@ -171,7 +155,7 @@
                 mistakeCount: sumOfMistakes,
                 paginatedResult: paginatedResults,
                 totalTime: totalTime
-            }
+            };
         }
     };
 

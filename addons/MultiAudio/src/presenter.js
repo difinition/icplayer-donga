@@ -120,7 +120,7 @@ function AddonMultiAudio_create(){
     presenter.createOnPauseEventData = function (data) {
         return getEventObject(data.currentItem, 'pause', '');
     };
-
+    
     presenter.sendEventAndSetCurrentTimeAlreadySent = function (eventData, currentTime) {
         eventBus.sendEvent('ValueChanged', eventData);
         currentTimeAlreadySent = currentTime;

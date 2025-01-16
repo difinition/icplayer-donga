@@ -159,10 +159,6 @@ function AddonDouble_State_Button_create(){
     function handleTouchActions() {
         var element = presenter.$view.find('div[class*=doublestate-button-element]:first');
 
-        if( presenter.configuration.isQnoteCustomDSB && presenter.configuration.isImageChoice ){
-            element = presenter.$view.find('div[class*=doublestate-button-element-nonecss]:first');
-        }
-
         element.on('touchstart', touchStartEventHandler);
         element.on('touchend', touchEndEventHandler);
     }
@@ -188,9 +184,6 @@ function AddonDouble_State_Button_create(){
     function handleMouseActions() {
         const $element = presenter.$view.find('div[class*=doublestate-button-element]:first');
 
-        if( presenter.configuration.isQnoteCustomDSB && presenter.configuration.isImageChoice ){
-            element = presenter.$view.find('div[class*=doublestate-button-element-nonecss]:first');
-        }
         $element.on('mousedown', (e) => mouseDownEventHandler(e));
         $element.on('click', (e) => clickEventHandler(e));
         $element.on('mouseup', (e) => mouseUpEventHandler(e));
@@ -250,24 +243,6 @@ function AddonDouble_State_Button_create(){
         $(imageElement).addClass('doublestate-button-image');
         $(imageElement).attr('src', presenter.isSelected() ? presenter.configuration.selected.image : presenter.configuration.deselected.image);
 
-        if(  presenter.configuration.isQnoteCustomDSB ){
-            try{
-                var geo = presenter.configuration.imageGeometry.value;
-//                 console.log("geo", geo);
-                var arrGeo = geo.split(",");
-//                console.log("arrGeo", arrGeo);
-                if( arrGeo.length > 3){
-                    var strGeo = "left: " + arrGeo[0] + "px; top: " + arrGeo[1] +  "px; width: " + arrGeo[2] +  "px; height: " + arrGeo[3] + "px;";
-//                    console.log("strGeo", strGeo);
-                    $(imageElement).attr('style', strGeo);
-                }
-
-            }catch(e){
-                console.log("createImageElemente e", e);
-            };
-        }
-
-
         if(!shouldDisplayImage) {
             hideImageElement(element);
         }
@@ -315,18 +290,10 @@ function AddonDouble_State_Button_create(){
     function getURLFromAbsolutePath(absolutePath) {
         const regExp = new RegExp(".*\\.com(\\/)file");
         const urlMatch = absolutePath.match(regExp);
-        if( urlMatch != null ){
-            const startURLIndex = urlMatch[0].lastIndexOf('/');
-            const endURLIndex = absolutePath.lastIndexOf('"');
+        const startURLIndex = urlMatch[0].lastIndexOf('/');
+        const endURLIndex = absolutePath.lastIndexOf('"');
 
-            return absolutePath.slice(startURLIndex, endURLIndex);
-        }else{
-            // 이석웅 예외처리
-            var fileName = absolutePath;
-            fileName = fileName.split('url("')[1]
-            fileName = fileName.split('")')[0];
-            return fileName;
-        }
+        return absolutePath.slice(startURLIndex, endURLIndex);
     }
 
     function removeImageElement(element) {
@@ -401,86 +368,24 @@ function AddonDouble_State_Button_create(){
     }
 
     function createElements(wrapper) {
+        const element = document.createElement('div');
+        const atLeastOneImgIsAvailable = presenter.configuration.selected.image || presenter.configuration.deselected.image;
+        $(element).addClass(presenter.isSelected() ? CSS_CLASSES.SELECTED : CSS_CLASSES.ELEMENT);
 
-
-//         console.log("QNOTE DSB", presenter.configuration.isQnoteCustomDSB);
-        //Qnote에서 커스텀한  DSB  인 경우
-        if( presenter.configuration.isQnoteCustomDSB ){
-            var element = document.createElement('div');
-            var orgCSS_SELECTED = CSS_CLASSES.SELECTED;
-            var orgCSS_ELEMENT = CSS_CLASSES.ELEMENT;
-
-            $(element).addClass(presenter.isSelected() ? orgCSS_SELECTED : orgCSS_ELEMENT);
-
-            wrapper.append(element);
-
-            var element2 = presenter.$view.find('div[class*=doublestate-button-element]:first');
-            var isCenter = isTextAlignCenter(element2);
-
-            //이석웅 추가, 이미지 초이스형 CSS 적용, 이미지가 아니고 text인데 center 정렬인 경우
-            var strNum = (presenter.configuration.number.value == "0" || presenter.configuration.number.value == "") ? "" :"_" + presenter.configuration.number.value;
-            if( !presenter.configuration.isImageChoice && isCenter ){
-                CSS_CLASSES = {
-                    ELEMENT : "doublestate-button-element-center" + strNum,
-                    MOUSE_HOVER : "doublestate-button-element-mouse-hover-center" + strNum,
-                    MOUSE_CLICK : "doublestate-button-element-mouse-click",
-                    SELECTED : "doublestate-button-element-selected-center" + strNum,
-                    SELECTED_MOUSE_HOVER : "doublestate-button-element-selected-mouse-hover-center" + strNum,
-                    SELECTED_MOUSE_CLICK : "doublestate-button-element-selected-mouse-click-center"
-                };
-            }
-
-
+        if (!atLeastOneImgIsAvailable && presenter.configuration.renderSVGAsHTML) {
+            createImageElement(element, false);
+            createSVGElementFromCSSUrl(element);
+        } else if (atLeastOneImgIsAvailable && presenter.configuration.renderSVGAsHTML) {
+            createSVGElement(element);
+        } else {
             createImageElement(element);
             createTextElement(element);
-
-            $(element).removeClass(presenter.isSelected() ? orgCSS_SELECTED : orgCSS_ELEMENT);
-            $(element).addClass(presenter.isSelected() ? CSS_CLASSES.SELECTED : CSS_CLASSES.ELEMENT);
-
-            return element;
-            //wrapper.append(element);
-        }else{
-//            console.log("Original DSB");
-            const element = document.createElement('div');
-            const atLeastOneImgIsAvailable = presenter.configuration.selected.image || presenter.configuration.deselected.image;
-            $(element).addClass(presenter.isSelected() ? CSS_CLASSES.SELECTED : CSS_CLASSES.ELEMENT);
-
-            if (!atLeastOneImgIsAvailable && presenter.configuration.renderSVGAsHTML) {
-                createImageElement(element, false);
-                createSVGElementFromCSSUrl(element);
-            } else if (atLeastOneImgIsAvailable && presenter.configuration.renderSVGAsHTML) {
-                createSVGElement(element);
-            } else {
-                createImageElement(element);
-                createTextElement(element);
-            }
-
-            wrapper.append(element);
-            return element;
         }
 
+        wrapper.append(element);
 
-
+        return element;
     }
-    // function createElements(wrapper) {
-    //     const element = document.createElement('div');
-    //     const atLeastOneImgIsAvailable = presenter.configuration.selected.image || presenter.configuration.deselected.image;
-    //     $(element).addClass(presenter.isSelected() ? CSS_CLASSES.SELECTED : CSS_CLASSES.ELEMENT);
-
-    //     if (!atLeastOneImgIsAvailable && presenter.configuration.renderSVGAsHTML) {
-    //         createImageElement(element, false);
-    //         createSVGElementFromCSSUrl(element);
-    //     } else if (atLeastOneImgIsAvailable && presenter.configuration.renderSVGAsHTML) {
-    //         createSVGElement(element);
-    //     } else {
-    //         createImageElement(element);
-    //         createTextElement(element);
-    //     }
-
-    //     wrapper.append(element);
-
-    //     return element;
-    // }
 
     function presenterLogic(view, model, preview) {
         presenter.$view = $(view);
@@ -524,42 +429,14 @@ function AddonDouble_State_Button_create(){
 
 
     function applySelectionStyle(className) {
-
         var element = presenter.$view.find('div[class*=doublestate-button-element]:first');
-
-        //
-        if( presenter.configuration.isQnoteCustomDSB && presenter.configuration.isImageChoice ){
-       		element = presenter.$view.find('div[class*=doublestate-button-element-nonecss]:first');
-        }
 
         $(element).removeClass(CSS_CLASSESToString());
         $(element).addClass(className);
     }
 
-   	function isTextAlignCenter(element){
-   		var isCenter = true;
-
-   		try{
-
-//   			console.log("element text-align", element.css('text-align'));
-//   			console.log("element", element);
-   			isCenter = (element.css('text-align').indexOf("center") > -1);
-   		}catch(e){
-//   			console.log("isTextAlignCenter e", element);
-   		}
-
-   		return isCenter;
-    }
-
-
-
-
     presenter.setElementSelection = function() {
         var element = presenter.$view.find('div[class*=doublestate-button-element]:first');
-        if( presenter.configuration.isQnoteCustomDSB && presenter.configuration.isImageChoice ){
-       		element = presenter.$view.find('div[class*=doublestate-button-element-nonecss]:first');
-        }
-
         var displayContent = presenter.isSelected() ? presenter.configuration.selected.displayContent : presenter.configuration.deselected.displayContent;
 
         var textElement = $(element).find('.doublestate-button-text');
@@ -727,10 +604,6 @@ function AddonDouble_State_Button_create(){
     presenter.toggleDisable = function(disable) {
         var element = presenter.$view.find('div[class*=doublestate-button-element]:first');
 
-        if( presenter.configuration.isQnoteCustomDSB && presenter.configuration.isImageChoice ){
-       		element = presenter.$view.find('div[class*=doublestate-button-element-nonecss]:first');
-        }
-
         if(disable) {
             element.addClass("disable");
         } else {
@@ -810,19 +683,10 @@ function AddonDouble_State_Button_create(){
         var image = presenter.validateString(model.Image);
         var selectedText = presenter.validateString(model["Text selected"]);
         var selectedImage = presenter.validateString(model["Image selected"]);
-        var imageGeometry = presenter.validateString(model["Image Geometry"]);
         var imageAlternativeText = presenter.validateString(model["imageAlternativeText"]);
         var imageSelectedAlternativeText = presenter.validateString(model["imageSelectedAlternativeText"]);
         var langTag = presenter.validateString(model["langAttribute"]);
-        var number = presenter.validateString(model["Number"]);
 
-//		console.log("langTag", langTag);
-//		console.log("imageAlternativeText", imageAlternativeText);
-//		console.log("imageSelectedAlternativeText", imageSelectedAlternativeText);
-
-        var isQnoteCustomDSB = (model.ImageChoice != null);
-		var isImageChoice = ModelValidationUtils.validateBoolean(model.ImageChoice);
-		var isOrgDSB = ModelValidationUtils.validateBoolean(model.isOrgDSB);
         var isDisabled = ModelValidationUtils.validateBoolean(model.Disable);
         var isVisible = ModelValidationUtils.validateBoolean(model["Is Visible"]);
         var isSelected = ModelValidationUtils.validateBoolean(model.isSelected);
@@ -832,25 +696,6 @@ function AddonDouble_State_Button_create(){
         var omitTextInTTS = ModelValidationUtils.validateBoolean(model.omitTextInTTS);
         var width = +model.Width;
         var height = +model.Height;
-        var isVisible = ModelValidationUtils.validateBoolean(model["Is Visible"]);
-
-//		console.log("isImageChoice2", isImageChoice, model.ImageChoice, model["Is Visible"], isOrgDSB);
-		//이석웅 추가, 이미지 초이스형 CSS 적용
-		if(  isQnoteCustomDSB && isImageChoice ){
-			CSS_CLASSES = {
-		        ELEMENT : "doublestate-button-element-nonecss",
-		        MOUSE_HOVER : "doublestate-button-element-nonecss-mouse-hover",
-		        MOUSE_CLICK : "doublestate-button-element-nonecss-mouse-click",
-		        SELECTED : "doublestate-button-element-nonecss-selected",
-		        SELECTED_MOUSE_HOVER : "doublestate-button-element-nonecss-selected-mouse-hover",
-		        SELECTED_MOUSE_CLICK : "doublestate-button-element-nonecss-selected-mouse-click"
-		    };
-
-		    if( !isOrgDSB  ){
-				image.value = "";
-				image.isEmpty = true;
-			}
-		}
 
         presenter.setSpeechTexts(model['speechTexts']);
 
@@ -878,16 +723,11 @@ function AddonDouble_State_Button_create(){
             isVisibleByDefault: isVisible,
             isErrorMode: false,
             isTabindexEnabled: isTabindexEnabled,
-            imageGeometry: imageGeometry,
             enableCheckMode: enableCheckMode,
-            isImageChoice : isImageChoice,
             langTag: langTag,
             renderSVGAsHTML: renderSVGAsHTML,
             width: width,
             height: height,
-            isOrgDSB: isOrgDSB,
-            isQnoteCustomDSB: isQnoteCustomDSB,
-            number: number,
             omitTextInTTS: omitTextInTTS
         };
     };
@@ -1066,7 +906,7 @@ function AddonDouble_State_Button_create(){
     };
 
     presenter.destroy = function(event) {
-        if (event == null || event.target === presenter.view) {
+        if (event.target === presenter.view) {
             presenter.wrapper.removeEventListener("keydown", presenter.handleKeyboardEvents);
 
             var element = presenter.$view.find('div[class*=doublestate-button-element]:first');

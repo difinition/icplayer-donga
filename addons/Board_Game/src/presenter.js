@@ -331,7 +331,7 @@ function AddonBoard_Game_create(){
     };
 
     presenter.destroy = function (event) {
-        if (event != null &&  event.target != presenter.$view.get(0)) {
+        if (event.target != presenter.$view.get(0)) {
             return;
         }
 

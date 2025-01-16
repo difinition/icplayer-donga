@@ -772,7 +772,7 @@ function AddonZoom_create() {
     };
 
     presenter.destroy = function (event) {
-        if (event != null && event.target !== presenter.view) {
+        if (event.target !== presenter.view) {
             return;
         }
 

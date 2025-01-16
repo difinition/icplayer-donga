@@ -192,34 +192,8 @@ function AddonStandard_Shapes_create(){
         element.attr('fill', presenter.configuration.strokeColor);
     };
 
-
-  /*  presenter.drawRectangle = function (paper, width, height, angle, scale) {
+    presenter.drawRectangle = function (paper, width, height, angle, scale) {
         var rectangle = paper.rect(presenter.configuration.strokeWidth / 2, presenter.configuration.strokeWidth / 2, width - presenter.configuration.strokeWidth, height - presenter.configuration.strokeWidth);
-        presenter.applyStyles(rectangle);
-        rectangle.transform("r" + angle + "s" + scale);
-    };
-    */
-    // corner radius적
-	presenter.drawRectangle = function (paper, width, height, angle, scale) {
-        var rectangle;
-        /*if (presenter.configuration.cornersRoundings) {
-            rectangle = paper.rect(presenter.configuration.strokeWidth / 2, presenter.configuration.strokeWidth / 2, width - presenter.configuration.strokeWidth, height - presenter.configuration.strokeWidth, 20);
-        }else{
-            rectangle = paper.rect(presenter.configuration.strokeWidth / 2, presenter.configuration.strokeWidth / 2, width - presenter.configuration.strokeWidth, height - presenter.configuration.strokeWidth);
-        }*/
-
-        if (presenter.configuration.cornersRoundings) {
-
-        	var radius = parseInt(presenter.configuration.arcSize)/2;
-        	if( radius < 0 ){
-            	radius = height / 10 * 1.5;
-            	radius = Math.min(150, radius);
-            }
-            //var radius = 15;
-            rectangle = paper.rect(presenter.configuration.strokeWidth / 2, presenter.configuration.strokeWidth / 2, width - presenter.configuration.strokeWidth, height - presenter.configuration.strokeWidth, radius);
-        }else{
-            rectangle = paper.rect(presenter.configuration.strokeWidth / 2, presenter.configuration.strokeWidth / 2, width - presenter.configuration.strokeWidth, height - presenter.configuration.strokeWidth);
-        }
         presenter.applyStyles(rectangle);
         rectangle.transform("r" + angle + "s" + scale);
     };
@@ -600,8 +574,6 @@ function AddonStandard_Shapes_create(){
             cornersRoundings = cornersRoundings === 'True';
         }
 
-        var arcSize = model["ArcSize"];
-
         var strokeOpacity = model["Stroke opacity"];
         if (!strokeOpacity) {
             strokeOpacity = 1;
@@ -634,8 +606,7 @@ function AddonStandard_Shapes_create(){
             strokeOpacity: strokeOpacity,
             lineEnding: lineEnding,
             isVisibleByDefault: isVisibleByDefault,
-            isVisible: isVisibleByDefault,
-            arcSize: arcSize
+            isVisible: isVisibleByDefault
         };
     };
 

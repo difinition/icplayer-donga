@@ -29,19 +29,11 @@ function AddonText_To_Speech_create() {
         S01: 'Sorry, your browser does not support speech synthesis.'
     };
 
-//    presenter.LANGUAGES_CODES = {
-//        English: 'en-US',
-//        Polski: 'pl-PL',
-//        Deutsch: 'de-DE',
-//        DEFAULT: 'English'
-//    };
-
     presenter.LANGUAGES_CODES = {
         English: 'en-US',
         Polski: 'pl-PL',
         Deutsch: 'de-DE',
-        Korean: 'ko-KR',
-        DEFAULT: 'Korean'
+        DEFAULT: 'English'
     };
 
     presenter.AREAS = {
@@ -82,7 +74,6 @@ function AddonText_To_Speech_create() {
             return getErrorObject(validatedConfiguration.errorCode);
         }
 
-//        console.log("validatedConfiguration.value", validatedConfiguration.value);
         return {
             ID: model.ID,
             isVisible: ModelValidationUtils.validateBoolean(model['Is Visible']),
@@ -209,8 +200,7 @@ function AddonText_To_Speech_create() {
         var languages = {
             'en': "en-US",
             'pl': 'pl-PL',
-            'de': 'de-DE',
-            'ko': 'ko-KR'
+            'de': 'de-DE'
         };
         langTag = languages[langTag] || langTag;
 
@@ -253,50 +243,12 @@ function AddonText_To_Speech_create() {
         }
     }
 
-    function containsOnlyNumbersAndDot(str) {
-        // 정규표현식을 사용하여 문자열이 숫자와 소수점으로만 구성되어 있는지 확인합니다.
-        // ^는 문자열의 시작을 나타냅니다.
-        // [0-9]는 0부터 9까지의 숫자를 의미합니다.
-        // \.은 소수점을 의미합니다.
-        // *는 앞의 패턴이 0회 이상 반복됨을 나타냅니다.
-        // $는 문자열의 끝을 나타냅니다.
-        var regex = /^[0-9.]*$/;
-
-        // 정규표현식과 매치되는지 확인합니다.
-        return regex.test(str);
-    }
-
-    function containsKorean(str){
-        str = str.replaceAll("|", "");
-        var regex = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/;
-        return regex.test(str);
-    }
-
     presenter.intervalId = null;
     presenter.intervalResume = null;
-
-    function replaceLang(texts){
-        for( var i=0; i<texts.length; ++i){
-            //이석웅 추가
-            //한글이 없고 숫자로만 이루어 지지 않았다면 lang을 eng로 변경
-            console.log("texts[i].text", texts[i].text, containsKorean(texts[i].text), containsOnlyNumbersAndDot(texts[i].text) );
-            if( !containsKorean(texts[i].text) && !containsOnlyNumbersAndDot(texts[i].text) ){
-                texts[i].lang = "en-US";
-            }
-        }
-    }
-
-
 
     // https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesis
     function speechSynthesisSpeak (texts, finalCallback) {
         window.speechSynthesis.cancel();
-
-        console.log("speechSynthesisSpeak texts", texts);
-
-        // 이석웅 추가
-        // 2024.04.27
-//        replaceLang(texts);
 
         if (presenter.intervalId != null) {
         clearInterval(presenter.intervalId);
@@ -409,8 +361,6 @@ function AddonText_To_Speech_create() {
                     if(options.hasOwnProperty('lang')){
                         langTag = options.lang;
                     }
-
-
 
                     if (langTag.length!==0) {
                         var altTextVoice = getTextVoiceObject(readableText, langTag);
@@ -670,71 +620,6 @@ function AddonText_To_Speech_create() {
         });
         return finalSplitTexts;
     }
-
-    var JaxToML = {
-     toMathML: function(jax, callback) {
-         var mml;
-         try {
-             mml = jax.root.toMathML("");
-         } catch (err) {
-             if (!err.restart) {
-                 throw err
-             } // an actual error
-             return MathJax.Callback.After([JaxToML.toMathML, jax, callback], err.restart);
-         }
-         MathJax.Callback(callback)(mml);
-     },
-     convert: function(texts, callback) {
-        try{
-             var retText = "";
-             for( var j=0; j<texts.length; ++j ){
-                 var tempDiv = document.createElement("tempDiv");
-                 console.log(" AjaxText 1 ",  texts[j].text);
-                 tempDiv.innerHTML = texts[j].text;
-                 document.body.appendChild(tempDiv);
-    //             var tempDiv = $('<div style="width:455px;height:450px:border-width:thick;border-style:double;display:none;"></div>').appendTo("body").html(AjaxText)[0];
-                 MathJax.Hub.Queue(["Typeset", MathJax.Hub, tempDiv]); //first place in Q
-                 MathJax.Hub.Queue(function() { //wait for a callback to be fired
-                     var jax = MathJax.Hub.getAllJax(tempDiv);
-                     for (var i = 0; i < jax.length; i++) {
-                         JaxToML.toMathML(jax[i], function(mml) {//alert(jax[i].originalText + "\n\n=>\n\n"+ mml);
-                             texts[j].text = texts[j].text.replace(jax[i].originalText, mml);
-                              console.log("mml ", mml);
-                         });
-                     }
-    //                 $(tempDiv).remove();
-                     tempDiv.remove();
-                     texts[j].text = texts[j].text.replace(/\(/g,""); //notice this escape character for ( - i.e it has to be \( , know why it is beacuse JS will treat ) or ( as end/begin of function as there are no quotes here.
-                     texts[j].text = texts[j].text.replace(/\)/g,""); //notice this escape character for ) - i.e it has to be \)
-                     texts[j].text = texts[j].text.replace(/\\/g,"");
-
-
-                     if( j == texts.length-1) callback(texts[j].text);
-                 });
-             }
-
-        }catch(e){
-            console.log("convert e: ", e);
-            callback(AjaxText);
-        }
-     },
-    };
-
-//    presenter.speakWithCallback = function (texts, callback) {
-//        console.log("speakWithCallback", texts)
-//        JaxToML.convert(texts, function(mml) {
-//            texts = presenter.parseAltTexts(texts);
-//            console.log("mml", mml);
-//            presenter.saveSentences(texts);
-//            if (isChrome()) {
-//                presenter.amplifyABeforeColon(texts);
-//            }
-//
-//
-//            presenter.readText(texts, callback);
-//        });
-//
-//    };
 
     presenter.speakWithCallback = function (texts, callback) {
         texts = presenter.parseAltTexts(texts);

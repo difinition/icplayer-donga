@@ -325,7 +325,7 @@ function AddonSwiffyAnimation_create(){
     };
 
     presenter.destroy = function(event) {
-        if (event == null || event.target === presenter.view) {
+        if (event.target === presenter.view) {
             if (presenter.loaded === true) {
                 presenter.loaded = false;
                 $(presenter.swiffyContainer).html("");

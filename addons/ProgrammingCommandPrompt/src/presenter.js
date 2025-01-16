@@ -34,7 +34,7 @@ function AddonProgrammingCommandPrompt_create () {
     };
 
     presenter.destroy = function (event) {
-        if (event != null && event.target !== presenter.view) { return; }
+        if (event.target !== presenter.view) { return; }
 
         presenter.configuration.sceneModule = null;
         presenter.configuration = null;

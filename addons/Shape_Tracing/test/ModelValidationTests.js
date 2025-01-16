@@ -1,4 +1,4 @@
-TestCase("Model validation", {
+TestCase("[Shape_Tracing] Model validation", {
     setUp: function () {
         this.presenter = AddonShape_Tracing_create();
 
@@ -24,6 +24,7 @@ TestCase("Model validation", {
             "Show Shape image on check": "True",
             "Show Boundaries (editor)": "True",
             "Background image": "/file/serve/6449219812458496",
+            "Correct Answer Image": "/file/serve/3449219812458491",
             "Correct number of lines": "2;3",
             "Points' coordinates": "1;1;1\n2;2;2\n3;3;3",
             "isPointsOrder": "False", // Mind points' order
@@ -32,7 +33,7 @@ TestCase("Model validation", {
             "Eraser Thickness": "10",
             "Opacity": "",
             "Border": "1"
-        }
+        };
     },
 
     'test proper model': function() {

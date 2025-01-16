@@ -301,7 +301,7 @@ function AddonGeometricConstruct_create() {
 
         return upgradedModel;
     }
-
+          
     presenter.upgradeGridColor = function(model) {
         const upgradedModel = {};
         $.extend(true, upgradedModel, model); // Deep copy of model object
@@ -366,7 +366,7 @@ function AddonGeometricConstruct_create() {
             }
             angleDecimalPoint = angleDecimalPointResult.value;
         }
-
+        
         var lengthDecimalPoint = 0;
         if (model["lengthDecimalPoint"].trim().length > 0) {
             var lengthDecimalPointResult = ModelValidationUtils.validateInteger(model["lengthDecimalPoint"]);
@@ -2769,12 +2769,12 @@ function AddonGeometricConstruct_create() {
         showAngleMeasure() {
             this.setAngleLabelAndMeasureVisibility(presenter.labelsVisibility, true);
         }
-
+        
         hideLabel() {
             super.hideLabel();
             this.setAngleLabelAndMeasureVisibility(false, presenter.angleMeasuresVisibility);
         }
-
+        
         showLabel() {
             super.showLabel();
             this.setAngleLabelAndMeasureVisibility(true, presenter.angleMeasuresVisibility);
