@@ -1,0 +1,841 @@
+<?xml version='1.0' encoding='UTF-8' ?><addon id='Spread_Editor'><metadata></metadata><model><property name='Page_Height' displayName='Page height for one image' type='string' isLocalized='false' isDefault='false' value='620'/><property name='One_Image_Layout' displayName='One image layout' type='boolean' isLocalized='false' isDefault='false'/><property name='Two_Pages' displayName='Two images in one slide' type='boolean' isLocalized='false' isDefault='false'/><property name='Pages' displayName='Page attributes' type='list'><property name='Commons' displayName='Commons page' type='boolean' isLocalized='false' isDefault='false'/><property name='Dont Show' displayName='' type='{---, icon, hotspot}, Don&apos;t Show' isLocalized='false' isDefault='false'/><property name='Page ID' displayName='Page ID' type='string' isLocalized='false' isDefault='false'/><property name='Image ID' displayName='' type='{Image1, Image2, Image3, Image4, Image5, Image6, Image7, Image8}, Image ID' isLocalized='false' isDefault='false'/><property name='Image Side' displayName='' type='{Left, Right}, Button image side' isLocalized='false' isDefault='false'/><property name='Cross Lesson ID' displayName='Cross lesson ID' type='string' isLocalized='false' isDefault='false'/><property name='Cross Page ID' displayName='Cross lesson page ID' type='string' isLocalized='false' isDefault='false'/><property name='Cross Course ID' displayName='Cross lesson course ID' type='string' isLocalized='false' isDefault='false'/></property><property name='Current_Image' displayName='Current image' type='string' isLocalized='false' isDefault='false'/><property name='Entry_Image' displayName='Show image on lesson entry' type='string' isLocalized='false' isDefault='false'/><property name='ControllerName' displayName='Controller ID to determine Last visited page' type='string' isLocalized='false' isDefault='false'/></model><resources></resources><css>.cover_thumbs {
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 120px;
+}
+
+.cover_thumbs_scroll {
+    position: relative;
+    margin: 0 auto;
+}
+
+.thumb_image_1,
+.thumb_image_2 {
+    position: relative;
+    width: 50%;
+    float: left;
+}
+
+.thumb_image_2 {
+    float: right;
+}</css><view>&lt;div class=&quot;cover_thumbs_scroll&quot; id=&quot;cover_thumbs_scroll_div&quot;&gt;&lt;/div&gt;</view><preview>&lt;div class=&quot;cover_thumbs_scroll&quot; id=&quot;cover_thumbs_scroll_div&quot;&gt;&lt;/div&gt;
+&lt;p&gt;Spread Editor&lt;/p&gt;
+&lt;p id=&quot;spread-preview&quot; style=&quot;color:darkred;font-weight:bold;font-size:14px;line-height:14px;&quot;&gt;&lt;/p&gt;</preview><presenter>function AddonSpread_Editor_create() {
+
+    let presenter = function () { };
+
+    let ratio = 0.75;
+    let pageWidth = 900;
+    let pageHeight = 620;
+    let pageIdx = [];
+    let pageModel = {};
+    let imgCount = 1;
+    let marginVertical = 30;
+    let marginHorizontal = 40;
+    let pageArr = [];
+    let imgNumbObj = {};
+    let imgObj = {};
+    let oneImageLayout = false;
+    let twoPages = false;
+    let newWidth = 350;
+    let newHeight = 600;
+    let thumbMaxWidth = 400;    // not used
+    let thumbMargin = 2;
+    let pageLoadedEvent = false;
+    let currentImage = 1;
+    let entryImage = 0;
+    let firstEntry = true;
+    presenter.contentScale = 1;
+
+    presenter.setPlayerController = function (controller) {
+        presenter.playerController = controller;
+        presenter.eventBus = controller.getEventBus();
+        presenter.eventBus.addEventListener(&apos;ValueChanged&apos;, this);
+        presenter.eventBus.addEventListener(&apos;PageLoaded&apos;, this);
+        presenter.presentation = controller.getPresentation();
+        presenter.commander = controller.getCommands();
+        presenter.currentIndex = controller.getCurrentPageIndex();
+        presenter.scoreService = controller.getScore();
+    };
+
+    var errorCodes = {
+        E01: &apos;Lesson ID is missing&apos;,
+        E02: &apos;Course ID is missing&apos;,
+        E03: &apos;At least one page id must be present&apos;
+    };
+
+    function getErrorObject(ec) {
+        return { isValid: false, errorCode: ec };
+    }
+
+    presenter.run = function (view, model) {
+        console.log(&apos;Spread Editor v2.1&apos;);
+        presenter.layout = getComputedStyle(document.documentElement).getPropertyValue(&apos;--layout&apos;).replace(/&apos;|&quot;/gi, &apos;&apos;).trim();
+        presenter.controllerName = model.ControllerName;
+        presenter.presenterLogic(view, model, false);
+        $(view).addClass(&apos;cover_thumbs&apos;);
+    };
+
+    presenter.setPreviewPageIds = function (ids) {
+        console.log(ids);
+    };
+
+    presenter.createPreview = function (view, model) {
+        presenter.presenterLogic(view, model, true);
+    };
+
+    presenter.presenterLogic = function (view, model, isPreview) {
+        presenter.$view = $(view);
+        presenter.collect(model, isPreview);
+    };
+
+    presenter.collect = function (model, isPreview) {
+        if (model.Pages[0][&apos;Page ID&apos;] == &apos;&apos;) return;
+
+        model.Pages.forEach((item, idx) =&gt; {
+            let imgId = item[&apos;Image ID&apos;] ? item[&apos;Image ID&apos;] : &apos;Image1&apos;;
+            let imgSide = item[&apos;Image Side&apos;] ? item[&apos;Image Side&apos;] : &apos;Left&apos;;
+            pageModel[idx + 1] = [idx + 2, item[&apos;Dont Show&apos;], item[&apos;Page ID&apos;], imgId, imgSide, item[&apos;Cross Lesson ID&apos;], item[&apos;Cross Page ID&apos;], item[&apos;Cross Course ID&apos;], item[&apos;Commons&apos;]];
+        });
+        oneImageLayout = ModelValidationUtils.validateBoolean(model.One_Image_Layout);
+        twoPages = ModelValidationUtils.validateBoolean(model.Two_Pages);
+        currentImage = parseInt(model.Current_Image, 10);
+        if (isNaN(currentImage)) currentImage = 1;
+        entryImage = parseInt(model.Entry_Image, 10);
+        if (isNaN(entryImage)) currentImage = 1;
+
+        let pageH = parseInt(getComputedStyle(document.documentElement).getPropertyValue(&apos;--cover_page_height_for_one_image&apos;), 10);
+        let marginV = parseInt(getComputedStyle(document.documentElement).getPropertyValue(&apos;--cover_image_vertical_margins&apos;), 10);
+        let marginH = parseInt(getComputedStyle(document.documentElement).getPropertyValue(&apos;--cover_buttons_horizontal_margins&apos;), 10);
+        let imgWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue(&apos;--cover_image_width&apos;), 10);
+        let imgHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue(&apos;--cover_image_height&apos;), 10);
+        let thumbMaxW = parseInt(getComputedStyle(document.documentElement).getPropertyValue(&apos;--cover_thumb_scroll_max_width&apos;), 10);
+        let thumbMarg = parseInt(getComputedStyle(document.documentElement).getPropertyValue(&apos;--cover_thumbs_margin&apos;), 10);
+
+        if (pageH) pageHeight = pageH;
+        if (marginV) marginVertical = marginV;
+        if (marginH) marginHorizontal = marginH;
+        if (imgWidth &amp;&amp; imgHeight) ratio = imgWidth / imgHeight;
+        if (thumbMarg) thumbMargin = thumbMarg;
+        if (thumbMaxW) thumbMaxWidth = thumbMaxW;   // not used
+
+        pageWidth = $(&apos;.ic_page&apos;).width();
+        if (!presenter.layout) {
+            presenter.layout = &apos;default&apos;;
+            if (pageWidth &lt;= 450) presenter.layout = &apos;mobile&apos;;
+        }
+        if (model.Page_Height &amp;&amp; presenter.layout != &apos;mobile&apos;) {
+            pageHeight = parseInt(model.Page_Height, 10) * presenter.contentScale;
+        }
+
+        // if (!isPreview) {
+        //     let layouts = presenter.playerController.getResponsiveLayouts();
+        // }
+
+        // image new dimensions depending on page height
+        newHeight = pageHeight - 2 * marginVertical;
+        newWidth = Math.floor(newHeight * ratio);
+
+        pageArr = Object.values(pageModel);
+        imgNumbObj = pageArr.reduce((count, el) =&gt; (count[el[3]] = count[el[3]] + 1 || 1, count), {});
+        imgCount = Object.keys(imgNumbObj).length;
+
+        // Assign buttons to the appropriate image
+        let imgSrc = [];
+        for (const image of Object.keys(imgNumbObj)) {
+            // collect image sources
+            imgSrc.push($(`#${image} img`).attr(&apos;src&apos;));
+            imgObj[image] = { &apos;Left&apos;: [], &apos;Right&apos;: [], &apos;CountLeft&apos;: 0, &apos;CountRight&apos;: 0 };
+            for (const el of pageArr) {
+                if (image == el[3]) {
+                    if (el[4] == &apos;Left&apos;) {
+                        imgObj[image][&apos;Left&apos;].push(el[0]);
+                        if (el[1] != &apos;icon&apos;) imgObj[image][&apos;CountLeft&apos;] += 1;
+                    } else {
+                        imgObj[image][&apos;Right&apos;].push(el[0]);
+                        if (el[1] != &apos;icon&apos;) imgObj[image][&apos;CountRight&apos;] += 1;
+                    }
+                }
+            }
+        }
+
+        if (oneImageLayout) {
+            // embed thumbnails inside &lt;div&gt; to scroll them horizontally
+            let thumbScroll = presenter.$view.find(&apos;#cover_thumbs_scroll_div&apos;);
+            let dsbThumb = $(&apos;.ic_page&apos;).find(`div[id^=&quot;DSB_Thumb&quot;]`);
+            let scrollWidth = 0;
+            let thumbHeight = 0;
+            dsbThumb.each((idx, el) =&gt; {
+                thumbScroll.append(el);
+                thumbHeight = $(el).outerHeight();
+                scrollWidth += $(el).outerWidth() + thumbMargin;
+            });
+            let top = 2 * marginVertical + newHeight;
+            if (twoPages &amp;&amp; presenter.layout != &apos;mobile&apos;) {
+                scrollWidth /= 2;
+            }
+            thumbScroll.css({ &apos;width&apos;: `${scrollWidth}px`, &apos;height&apos;: `${thumbHeight}px` });
+
+            let thumb1 = $(&apos;.ic_page&apos;).find(&apos;#DSB_Thumb1&apos;);
+            thumbHeight = thumb1.height();
+            let thumbWidth = Math.floor(thumbHeight * ratio);
+            if (twoPages &amp;&amp; presenter.layout != &apos;mobile&apos;) {
+                thumbWidth *= 2;
+            }
+            let thumbs = $(&apos;.ic_page&apos;).find(`div[id^=&quot;DSB_Thumb&quot;]`);
+            let thumbTop = 0;
+            let thumbLeft = 0;
+            thumbs.each((idx, el) =&gt; {
+                // add second &lt;img&gt; to DSB
+                if (twoPages &amp;&amp; presenter.layout != &apos;mobile&apos;) {
+                    let $img = $(el).find(&apos;img&apos;);
+                    $img.removeClass(&apos;doublestate-button-image&apos;);
+                    $img.addClass(&apos;thumb_image thumb_image_1&apos;);
+                    $(`&lt;img class=&apos;thumb_image thumb_image_2&apos; src=&apos;&apos;&gt;`).insertAfter($img);
+
+                    // reduce width for last odd thumbnail
+                    if (idx % 2 &amp;&amp; idx == Math.floor(imgSrc.length / 2)) {
+                        thumbWidth /= 2;
+                        $(el).addClass(&apos;one_image&apos;);
+                    }
+                }
+                $(el).css({ &apos;width&apos;: `${thumbWidth}px`, &apos;left&apos;: `${thumbLeft}px`, &apos;top&apos;: `${thumbTop}px` });
+                thumbLeft += thumb1.outerWidth() + thumbMargin;
+            });
+
+            setTimeout(() =&gt; {
+                presenter.$view.attr(&apos;style&apos;, `position: absolute; top: ${top}px; left: 0; width: 100%; height: ${thumbHeight}px;`);
+
+                // put url to every &lt;img&gt; in DSB
+                if (twoPages &amp;&amp; presenter.layout != &apos;mobile&apos;) {
+                    $(&apos;.thumb_image&apos;).each((idx, el) =&gt; {
+                        if (idx &amp;&amp; idx &lt; imgSrc.length) {
+                            $(el).attr(&apos;src&apos;, &apos;&apos;);
+                            $(el).attr(&apos;src&apos;, imgSrc[idx]);
+                        }
+                    });
+                }
+
+                presenter.oneImageOnPageVisible(isPreview, currentImage);
+            });
+        } else {
+            presenter.moreImagesOnPageVisible(isPreview);
+        }
+    };
+
+    presenter.oneImageOnPageVisible = function (isPreview, idx) {
+        // handle thumbnails selection
+        if (!isPreview) {
+            let imgNr = idx;
+            if (twoPages &amp;&amp; presenter.layout != &apos;mobile&apos;) {
+                imgNr = Math.ceil(imgNr / 2);
+            }
+            let buttons = presenter.getPageModules(&apos;DSB_Thumb&apos;);
+            for (const butt of buttons) {
+                let buttModul = presenter.playerController.getModule(butt);
+                if (buttModul) {
+                    let buttNr = parseInt(butt.slice(9), 10);
+                    if (buttNr == imgNr) {
+                        buttModul.select();
+                        // move selected button to center
+                        if (pageLoadedEvent/* &amp;&amp; left / 2 &gt; scrollWidth / 2*/) {
+                            let scrollWidth = $(&apos;.cover_thumbs&apos;).outerWidth();
+                            let left = $(buttModul.getView()).position().left;
+                            if (left &gt; scrollWidth / 2) {
+                                document.querySelector(&apos;.cover_thumbs&apos;).scrollTo({ left: `${left / 2}` });
+                            } else {
+                                document.querySelector(&apos;.cover_thumbs&apos;).scrollTo({ left: 0 });
+                            }
+                        }
+                    } else {
+                        buttModul.deselect();
+                    }
+                }
+            }
+        }
+
+        // handle images and assigned buttons
+        for (const image of Object.keys(imgNumbObj)) {
+            if (!image) continue;
+
+            let imgNr = parseInt(image.slice(5), 10);
+            let img = $(&apos;.ic_page&apos;).find(`#${image}`);
+
+            let top = marginVertical;
+            let left = (pageWidth - newWidth) / 2;
+
+            // two images side by side on desktop
+            if (twoPages &amp;&amp; presenter.layout != &apos;mobile&apos;) {
+                if (imgNr % 2) {
+                    if (imgNr == imgCount) {
+                        img.removeClass(&apos;left&apos;);
+                        img.removeClass(&apos;right&apos;);
+                        img.addClass(&apos;center&apos;);
+                        left = (pageWidth - newWidth) / 2;
+                    } else {
+                        img.addClass(&apos;left&apos;);
+                        left = pageWidth / 2 - newWidth;
+                    }
+                } else {
+                    img.addClass(&apos;right&apos;);
+                    left = pageWidth / 2;
+                }
+            } else {
+                img.removeClass(&apos;left&apos;);
+                img.removeClass(&apos;right&apos;);
+                img.addClass(&apos;center&apos;);
+            }
+
+            // first: set image position
+            img.css({ &apos;width&apos;: `${newWidth}px`, &apos;height&apos;: `${newHeight}px`, &apos;left&apos;: `${left}px`, &apos;top&apos;: `${top}px` });
+            img.find(&apos;img&apos;).css({ &apos;width&apos;: `${newWidth}px`, &apos;height&apos;: `${newHeight}px` });
+
+            // then: show/hide image
+            if (twoPages &amp;&amp; presenter.layout != &apos;mobile&apos;) {
+                if (!isPreview) {
+                    // idx = idx * 2 - 1;
+                } else {
+                    idx = idx - (idx % 2 ? 0 : 1);
+                }
+                let imgNext = $(&apos;.ic_page&apos;).find(`#Image${idx + 1}`);
+                if (imgNr == idx || imgNr == idx + 1) {
+                    img.css({ &apos;visibility&apos;: &apos;visible&apos;, &apos;display&apos;: &apos;block&apos; });
+                    presenter.toggleImageElements(isPreview, imgNr, true);
+                    if (imgNext) {
+                        imgNext.css({ &apos;visibility&apos;: &apos;visible&apos;, &apos;display&apos;: &apos;block&apos; });
+                        presenter.toggleImageElements(isPreview, imgNr, true);
+                    }
+                } else {
+                    img.css({ &apos;visibility&apos;: &apos;hidden&apos;, &apos;display&apos;: &apos;none&apos; });
+                    presenter.toggleImageElements(isPreview, imgNr, false);
+                }
+                let thumb = $(&apos;.ic_page&apos;).find(`#DSB_Thumb${imgNr}`);
+                if (imgNr &lt;= Math.ceil(Object.keys(imgNumbObj).length / 2)) {
+                    thumb.css({ &apos;visibility&apos;: &apos;visible&apos;, &apos;display&apos;: &apos;block&apos; });
+                } else {
+                    thumb.css({ &apos;visibility&apos;: &apos;hidden&apos;, &apos;display&apos;: &apos;none&apos; });
+                }
+            } else {
+                if (idx == imgNr) {
+                    img.css({ &apos;visibility&apos;: &apos;visible&apos;, &apos;display&apos;: &apos;block&apos; });
+                    presenter.toggleImageElements(isPreview, imgNr, true);
+                } else {
+                    img.css({ &apos;visibility&apos;: &apos;hidden&apos;, &apos;display&apos;: &apos;none&apos; });
+                    presenter.toggleImageElements(isPreview, imgNr, false);
+                }
+
+                let thumb = $(&apos;.ic_page&apos;).find(`#DSB_Thumb${imgNr}`);
+                thumb.css({ &apos;visibility&apos;: &apos;visible&apos;, &apos;display&apos;: &apos;block&apos; });
+            }
+        }
+
+        /*** CROSS LESSON BUTTONS ***
+        // handle &quot;cross lesson&quot; buttons
+        let imgArr = Object.keys(imgObj);
+        let crossLessonPrev = $(&apos;.ic_page&apos;).find(&apos;#Cross_Lesson_Prev&apos;);
+        if (crossLessonPrev.length) {
+            let imgNr = parseInt(imgArr[0].slice(5), 10);                      // first image
+            if (imgNr == idx) {
+                crossLessonPrev.css({ &apos;visibility&apos;: &apos;visible&apos; });
+            } else {
+                crossLessonPrev.css({ &apos;visibility&apos;: &apos;hidden&apos; });
+            }
+        }
+        let crossLessonNext = $(&apos;.ic_page&apos;).find(&apos;#Cross_Lesson_Next&apos;);
+        if (crossLessonNext.length) {
+            let imgNr = parseInt(imgArr[imgArr.length - 1].slice(5), 10);      // last image
+            if (imgNr == idx) {
+                crossLessonNext.css({ &apos;visibility&apos;: &apos;visible&apos; });
+            } else {
+                crossLessonNext.css({ &apos;visibility&apos;: &apos;hidden&apos; });
+            }
+        }
+        ***/
+
+        let str = `width:${newWidth}px, height:${newHeight}px`;
+        presenter.$view.find(&apos;#spread-preview&apos;).html(str);
+
+        setTimeout(() =&gt; presenter.arrange());
+    };
+
+    presenter.moreImagesOnPageVisible = function (isPreview) {
+        let top = marginVertical;
+        let left = 0;
+        let str = `width:${newWidth}px, height:${newHeight}px`;
+
+        for (const image of Object.keys(imgNumbObj)) {
+            let imgNr = parseInt(image.slice(5), 10);
+            let img = $(&apos;.ic_page&apos;).find(`#${image}`);
+
+            if (presenter.layout != &apos;mobile&apos;) {
+                if (imgNr % 2) {
+                    if (imgNr == imgCount) {
+                        img.removeClass(&apos;left&apos;);
+                        img.removeClass(&apos;right&apos;);
+                        img.addClass(&apos;center&apos;);
+                        left = (pageWidth - newWidth) / 2;
+                    } else {
+                        img.addClass(&apos;left&apos;);
+                        left = pageWidth / 2 - newWidth;
+                    }
+                } else {
+                    img.addClass(&apos;right&apos;);
+                    left = pageWidth / 2;
+                }
+
+                if (imgNr &gt; 4) {
+                    top = 3 * marginVertical + 2 * newHeight;
+                } else if (imgNr &gt; 2) {
+                    top = 2 * marginVertical + newHeight;
+                }
+            } else {
+                img.removeClass(&apos;left&apos;);
+                img.removeClass(&apos;right&apos;);
+                img.addClass(&apos;center&apos;);
+                left = (pageWidth - newWidth) / 2;
+
+                top = newHeight * (imgNr - 1) + marginVertical * imgNr;
+            }
+
+            img.css({ &apos;width&apos;: `${newWidth}px`, &apos;height&apos;: `${newHeight}px`, &apos;left&apos;: `${left}px`, &apos;top&apos;: `${top}px` });
+            img.css({ &apos;visibility&apos;: &apos;visible&apos;, &apos;display&apos;: &apos;block&apos; });
+
+            if (!isPreview) {
+                // sometimes not working without this
+                let imgModul = presenter.playerController.getModule(image);
+                if (imgModul) imgModul.show();
+            } else {
+                let imgNext = img.next();
+                imgNext.css({ &apos;width&apos;: `${newWidth}px`, &apos;height&apos;: `${newHeight}px`, &apos;left&apos;: `${left}px`, &apos;top&apos;: `${top}px` });
+                str += `&lt;br/&gt;${image} - left:${left}px, top:${top}px`;
+            }
+            presenter.toggleImageElements(isPreview, imgNr, true);
+        }
+        presenter.$view.find(&apos;#spread-preview&apos;).html(str);
+
+        setTimeout(() =&gt; presenter.arrange());
+    };
+
+    presenter.toggleImageElements = function (isPreview, imgNr, show) {
+        imgObj[`Image${imgNr}`][&apos;Left&apos;].forEach((id) =&gt; toggleElements(id, show));
+        imgObj[`Image${imgNr}`][&apos;Right&apos;].forEach((id) =&gt; toggleElements(id, show));
+
+        function toggleElements(id, show) {
+            let dontShow = pageModel[id - 1][1];
+
+            let ssbModul = $(&apos;.ic_page&apos;).find(`#Single_State_Button${id - 1}`);
+            let dsbModul = $(&apos;.ic_page&apos;).find(`#Double_State_Button${id - 1}`);
+            if (show) {
+                if (dontShow != &apos;hotspot&apos;) {
+                    if (ssbModul.length) ssbModul.css({ &apos;visibility&apos;: &apos;visible&apos;, &apos;display&apos;: &apos;block&apos; });
+                    if (!isPreview &amp;&amp; ssbModul.length) {
+                        let ssb = presenter.playerController.getModule(ssbModul[0].id);
+                        if (ssb) ssb.show();
+                    }
+                }
+                if (dontShow != &apos;icon&apos;) dsbModul.css({ &apos;visibility&apos;: &apos;visible&apos;, &apos;display&apos;: &apos;block&apos; });
+            } else {
+                ssbModul.css({ &apos;visibility&apos;: &apos;hidden&apos;, &apos;display&apos;: &apos;none&apos; });
+                dsbModul.css({ &apos;visibility&apos;: &apos;hidden&apos;, &apos;display&apos;: &apos;none&apos; });
+            }
+
+            // find additional ssb hotspots with &quot;_1&quot; postfix
+            let additionalSSB = $(&apos;.ic_page&apos;).find(`div[id^=&quot;Single_State_Button${id - 1}_&quot;]`);
+            if (additionalSSB.length) {
+                additionalSSB.each((idx, el) =&gt; {
+                    if (show) {
+                        if (dontShow != &apos;hotspot&apos;) {
+                            $(el).css({ &apos;visibility&apos;: &apos;visible&apos;, &apos;display&apos;: &apos;block&apos; });
+                            if (!isPreview) {
+                                let ssb = presenter.playerController.getModule(el.id);
+                                if (ssb) ssb.show();
+                            }
+                        }
+                    } else {
+                        $(el).css({ &apos;visibility&apos;: &apos;hidden&apos;, &apos;display&apos;: &apos;none&apos; });
+                    }
+                });
+            }
+        }
+    };
+
+    presenter.arrange = function () {
+        let imgArr = Object.keys(imgObj);
+
+        /*** CROSS LESSON BUTTONS ***
+        // Stick &quot;cross lesson&quot; buttons to the left and right side of the images
+        let crossLessonPrev = handleCrossLesson(imgArr, &apos;Prev&apos;);
+        let crossLessonNext = handleCrossLesson(imgArr, &apos;Next&apos;);
+
+        function handleCrossLesson (imgArr, position) {
+            let crossLesson = $(&apos;.ic_page&apos;).find(&apos;#Cross_Lesson_&apos; + position);
+            if (crossLesson.length) {
+                let imgId, top, left;
+                if (position == &apos;Prev&apos;) {
+                    crossLesson.addClass(&apos;left&apos;);
+                    imgId = imgArr[0];                      // first image
+                    if (!imgId) return;
+                } else {
+                    crossLesson.addClass(&apos;right&apos;);
+                    imgId = imgArr[imgArr.length - 1];      // last image
+                }
+                let img = $(&apos;.ic_page&apos;).find(`#${imgId}`);
+                let imgTop = Math.round(img.position().top / presenter.contentScale);
+                let imgHeight = img.height();
+                let crossWidth = crossLesson.width();
+                let crossHeight = crossLesson.height();
+                let imgPos = Math.round(img.position().left / presenter.contentScale);
+                if (position == &apos;Prev&apos;) {
+                    left = imgPos - crossWidth;
+                } else {
+                    left = imgPos + img.width();
+                }
+                top = Math.round(imgTop + (imgHeight - crossHeight) / 2);
+                crossLesson.css({ &apos;left&apos;: `${left}px`, &apos;top&apos;: `${top}px` });
+                if (!oneImageLayout) crossLesson.css({ &apos;visibility&apos;: &apos;visible&apos; });
+            }
+            return crossLesson;
+        }
+        ***/
+
+        // Arrange buttons evenly along the height of the image to which they are assigned
+        // When arranging, include the space for &quot;cross lesson&quot; buttons on both sides of the image
+
+        for (const image of imgArr) {
+            let img = $(&apos;.ic_page&apos;).find(`#${image}`);
+            if (!img.length) break;
+
+            let imgTop = Math.round(img.position().top / presenter.contentScale);
+            imgTop = parseInt(img.css(&apos;top&apos;));
+            let imgLeft = Math.round(img.position().left / presenter.contentScale);
+            imgLeft = parseInt(img.css(&apos;left&apos;));
+            let imgRight = Math.round(img.position().left / presenter.contentScale + img.width());
+            imgRight = Math.round(imgLeft + img.width());
+            let imgHeight = img.height();
+            loopArranger(image, imgTop, imgLeft, imgRight, imgHeight, &apos;Left&apos;);
+            loopArranger(image, imgTop, imgLeft, imgRight, imgHeight, &apos;Right&apos;);
+        }
+
+        function loopArranger(image, imgTop, imgLeft, imgRight, imgHeight, position) {
+            let top = 0;
+            let left = 0;
+            let counter = 0;
+            let className = position.toLowerCase();
+            let countPosition = &apos;Count&apos; + position;
+            let buttCount = imgObj[image][countPosition];
+
+            /*** CROSS LESSON BUTTONS ***
+            // Additional &quot;cross lesson&quot; buttons
+            let isCLFound = crossLessonPrev.length &amp;&amp; position == &apos;Left&apos; || crossLessonNext.length &amp;&amp; position == &apos;Right&apos;;
+            if (isCLFound) {
+                buttCount++;
+            }
+            let crossHeight = crossLessonPrev.outerHeight();
+            if (position == &apos;Right&apos;) crossHeight = crossLessonNext.outerHeight();
+            ***/
+
+            imgObj[image][position].forEach((id) =&gt; {
+                let dontShow = pageModel[id - 1][1];
+                if (dontShow != &apos;icon&apos;) {
+                    let dsbModul = $(&apos;.ic_page&apos;).find(`#Double_State_Button${id - 1}`);
+                    let dsbWidth = dsbModul.outerWidth();
+                    let dsbHeight = dsbModul.outerHeight();
+                    let stepY = Math.round((imgHeight - dsbHeight * buttCount) / buttCount);
+                    top = Math.round(imgTop + stepY / 2 + counter * (stepY + dsbHeight));
+
+                    /*** CROSS LESSON BUTTONS ***
+                    // top position - include the space for &quot;cross lesson&quot; buttons
+                    if (isCLFound) {
+                        if (buttCount % 2) {
+                            // even button count, placing the same amount of buttons above and below CL
+                            if (counter &gt;= Math.floor(buttCount / 2)) {
+                                top += stepY + dsbHeight;
+                            } else {
+                            }
+                        } else {
+                            // odd button count, placing one more button above CL
+                            if (counter &lt; Math.floor(buttCount / 2)) {
+                                stepY = Math.round((imgHeight - dsbHeight * (buttCount + 1)) / (buttCount + 1));
+                                top = Math.round(imgTop + stepY / 2 + counter * (stepY + dsbHeight));
+                                top += stepY - dsbHeight;
+                            } else {
+                                stepY = Math.round((imgHeight - dsbHeight * (buttCount - 2)) / (buttCount - 2));
+                                top = Math.round(imgTop + stepY / 2 + counter * (stepY + dsbHeight));
+                                top -= stepY + dsbHeight;
+                            }
+                        }
+                    }
+                    ***/
+
+                    // left position
+                    if (position == &apos;Left&apos;) {
+                        left = imgLeft - marginHorizontal - dsbWidth;
+                    } else {
+                        left = imgRight + marginHorizontal;
+                    }
+
+                    dsbModul.addClass(className);
+                    dsbModul.css({ &apos;left&apos;: `${left}px`, &apos;top&apos;: `${top}px` });
+                    counter++;
+                }
+            });
+        }
+    };
+
+    // === HELPERS ===
+    presenter.getPageModules = function (modulName) {
+        const allModules = presenter.presentation.getPage(presenter.currentIndex).getModulesAsJS();
+        return allModules.filter((modul) =&gt; modul.indexOf(modulName) == 0);
+    };
+
+    // Helpers: gotopage nad crosslesson
+    presenter.openPage = function (idx) {
+        let id = pageModel[idx][2];
+        if (id) {
+            let commons = pageModel[idx][8];
+            if (commons == &apos;True&apos;) {
+                presenter.commander.gotoCommonPageId(id);
+            } else {
+                presenter.commander.gotoPageId(id);
+            }
+        } else {
+            presenter.gotoCrossLesson(idx);
+        }
+    }
+    presenter.gotoCrossLesson = function (idx) {
+        var data = { type: &apos;lesson&apos;, openLessonInCurrentTab: true };
+        let lessID = pageModel[idx][5];
+        if (lessID) {
+            data.lessonID = lessID;
+        }
+        let pageID = pageModel[idx][6];
+        if (pageID) {
+            data.page = pageID;
+        }
+        let courseID = pageModel[idx][7];
+        if (courseID) {
+            data.courseID = courseID;
+        }
+        var jsonData = JSON.stringify(data);
+        presenter.playerController.sendExternalEvent(&apos;crossLesson&apos;, jsonData);
+    };
+
+    // Helpers: page scale
+    presenter.getContentScale = function () {
+        let contentScale = 1;
+        if ($(&apos;#content&apos;).style().transform) {
+            contentScale = $(&apos;#content&apos;).style().transform.substr(6);
+            contentScale = parseFloat(contentScale.substr(0, contentScale.length - 1));
+        }
+        return contentScale;
+    };
+    presenter.getHeaderHeightScaled = function () {
+        return ($(&apos;.ic_header&apos;)[0].clientHeight) * presenter.contentScale;
+    };
+    presenter.getMCourserHeaderHeightScaled = function () {
+        let mCourserHeader = $(&apos;.mdl-layout__header&apos;);
+        let mCourserHeaderHeightScaled = 0;
+        if (mCourserHeader.length == 1) {
+            mCourserHeaderHeightScaled = mCourserHeader[0].offsetHeight;
+        };
+        return mCourserHeaderHeightScaled;
+    };
+    presenter.getElementX = function (element) {
+        let playerX = Math.round($(&apos;.ic_player&apos;).offset().left);
+        let elX = Math.round($(element).offset().left);
+        return (elX - playerX) / presenter.contentScale;
+    };
+    presenter.getElementY = function (element) {
+        let elY = Math.round($(element).offset().top);
+        return (elY - presenter.headerHeightScaled) / presenter.contentScale;
+    };
+
+    // Helpers: binding
+    function prepareBinding(modul) {
+        let arr = [];
+        let obj = {};
+        let modules = presenter.getPageModules(modul);
+        modules.forEach((modulId) =&gt; {
+            if (/\d/.test(modulId)) {
+                arr.push(modulId);
+            }
+        });
+        for (var i = 0; i &lt; arr.length + 20; i++) {
+            obj[i] = [];
+        }
+        for (var i = 0; i &lt; arr.length; i++) {
+            let digit = parseInt(arr[i].replace(/(\D+)/, &apos;&apos;));
+            if (digit) obj[digit].push(arr[i]);
+        }
+        for (var i = 0; i &lt; Object.keys(obj).length; i++) {
+            if (obj[i].length) {
+                obj[i].forEach((id, idx, idArr) =&gt; {
+                    hoverBinding(id, idx, idArr);
+                });
+            }
+        }
+    }
+    function hoverBinding(id, idx, idArr) {
+        let buttNr = id.slice(19);
+        let btnIcon = presenter.playerController.getModule(&apos;Double_State_Button&apos; + buttNr); // DSB
+        if (btnIcon) {
+            let btnIconView = btnIcon.getView();
+            let iconElementFound = $(btnIconView).find(&apos;.doublestate-button-element&apos;);
+            let iconSelectedFound = $(btnIconView).find(&apos;.doublestate-button-element-selected&apos;);
+            for (let i = 0; i &lt; idArr.length; i++) {
+                let btnRect = presenter.playerController.getModule(idArr[i]);               // SSB
+                if (btnRect) {
+                    let btnRectView = btnRect.getView();
+                    let rectFound = $(btnRectView).find(&apos;.singlestate-button-element&apos;);
+                    $(btnRectView).mouseenter(() =&gt; iconElementFound.addClass(&apos;hovering&apos;));
+                    $(btnRectView).mouseleave(() =&gt; iconElementFound.removeClass(&apos;hovering&apos;));
+                    $(btnRectView).mouseenter(() =&gt; iconSelectedFound.addClass(&apos;hovering&apos;));
+                    $(btnRectView).mouseleave(() =&gt; iconSelectedFound.removeClass(&apos;hovering&apos;));
+                    $(btnIconView).mouseenter(() =&gt; rectFound.addClass(&apos;hovering&apos;));
+                    $(btnIconView).mouseleave(() =&gt; rectFound.removeClass(&apos;hovering&apos;));
+                }
+            }
+        } else {
+            let btnRectBase = presenter.playerController.getModule(&apos;Single_State_Button&apos; + buttNr);
+            if (btnRectBase) {
+                let btnRectBaseView = btnRectBase.getView();
+                let rectBaseFound = $(btnRectBaseView).find(&apos;.singlestate-button-element&apos;);
+                for (let i = 0; i &lt; idArr.length; i++) {
+                    if (idx != i) {
+                        let btnRect = presenter.playerController.getModule(idArr[i]);
+                        if (btnRect) {
+                            let btnRectView = btnRect.getView();
+                            let rectFound = $(btnRectView).find(&apos;.singlestate-button-element&apos;);
+                            $(btnRectView).mouseenter(() =&gt; rectBaseFound.addClass(&apos;hovering&apos;));
+                            $(btnRectView).mouseleave(() =&gt; rectBaseFound.removeClass(&apos;hovering&apos;));
+                            $(btnRectBaseView).mouseenter(() =&gt; rectFound.addClass(&apos;hovering&apos;));
+                            $(btnRectBaseView).mouseleave(() =&gt; rectFound.removeClass(&apos;hovering&apos;));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // === EVENTS ===
+    presenter.onEventReceived = function (eventName, eventData) {
+        // console.log(&apos;event name: &apos; + eventName + &apos;\n   event source: &apos; + eventData.source + &apos;\n   event value: &apos; + eventData.value + &apos;\n   event item: &apos; + eventData.item);
+
+        if (!eventData.source) return;
+
+        if (eventName == &apos;PageLoaded&apos; &amp;&amp; eventData.source.indexOf(&apos;header&apos;) == 0) {
+            setTimeout(() =&gt; {
+                presenter.contentScale = presenter.getContentScale();
+                presenter.headerHeightScaled = presenter.getHeaderHeightScaled() - presenter.getMCourserHeaderHeightScaled();
+                // console.log(&apos;contentScale&apos;, presenter.contentScale);
+                prepareBinding(&apos;Single_State_Button&apos;);
+                if (presenter.contentScale != 1) presenter.arrange();
+
+                // determine last visited page before enter spread editor
+                if (presenter.controllerName) {
+                    let lastVisitedPageIdx = 1;
+                    let lessonController = presenter.playerController.getHeaderModule(presenter.controllerName);
+                    let lastVisitedPageId = lessonController.getLastVisitedPageId();
+                    for (let arr of pageArr) {
+                        if (lastVisitedPageId == arr[2]) {
+                            lastVisitedPageIdx = parseInt(arr[3].slice(5), 10);
+                            break;
+                        }
+                    }
+
+                    pageLoadedEvent = true;
+                    if (twoPages &amp;&amp; presenter.layout != &apos;mobile&apos;) lastVisitedPageIdx = lastVisitedPageIdx - (lastVisitedPageIdx % 2 ? 0 : 1);
+                    if (oneImageLayout) {
+                        if (isNaN(entryImage) || entryImage == 0) {
+                            // console.log(&apos;PAGE LOADED&apos;);
+                            presenter.oneImageOnPageVisible(false, lastVisitedPageIdx);
+                        } else {
+                            if (firstEntry) {
+                                // console.log(&apos;FIRST ENTRY&apos;);
+                                presenter.oneImageOnPageVisible(false, entryImage);
+                                firstEntry = false;
+                            } else {
+                                // console.log(&apos;PAGE LOADED&apos;);
+                                presenter.oneImageOnPageVisible(false, lastVisitedPageIdx);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        if (eventData.source.indexOf(&apos;Single_State_Button&apos;) == 0) {
+            let idx = parseInt(eventData.source.slice(19), 10);
+            presenter.openPage(idx);
+        }
+
+        if (eventData.source.indexOf(&apos;Double_State_Button&apos;) == 0) {
+            presenter.playerController.getModule(eventData.source).deselect();
+            let idx = parseInt(eventData.source.slice(19), 10);
+            presenter.openPage(idx);
+        }
+
+        if (eventData.source.indexOf(&apos;DSB_Thumb&apos;) == 0) {
+            pageLoadedEvent = false;
+            let idx = parseInt(eventData.source.slice(9), 10);
+            if (twoPages &amp;&amp; presenter.layout != &apos;mobile&apos;) idx = idx * 2 - 1;
+            presenter.oneImageOnPageVisible(false, idx);
+        }
+
+        // --- HIGHLIGHT ICONS ON SPREAD EDITOR FOR REPORTABLE PAGES
+        if (eventName == &apos;PageLoaded&apos; &amp;&amp; eventData.source.indexOf(&apos;header&apos;) &lt; 0 &amp;&amp; eventData.source.indexOf(&apos;footer&apos;) &lt; 0) {
+            let spreadEditor = presenter.playerController.getModule(&apos;Spread_Editor1&apos;);
+            if (spreadEditor) {
+                let pageIDs = [];
+                for (let el of pageArr) {
+                    if (el[2]) pageIDs.push([el[0], el[2]]);
+                }
+                for (let i = 0; i &lt; presenter.presentation.getPageCount(); i++) {
+                    let page = presenter.presentation.getPage(i);
+                    if (page.isReportable()) {
+                        let pageId = page.getId();
+                        let flat = pageIDs.flat();
+                        let found = flat.findIndex((element) =&gt; element == pageId);
+                        if (found &gt; -1) {
+                            let btn = presenter.playerController.getModule(&apos;Double_State_Button&apos; + (flat[found - 1] - 1));
+                            if (btn) {
+                                let pageScore = presenter.scoreService.getPageScoreById(pageId);
+                                let score = pageScore.score;
+                                let maxScore = pageScore.maxScore;
+                                if (maxScore &gt; 0 &amp;&amp; score == maxScore) {
+                                    btn.select();
+                                } else {
+                                    btn.deselect();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    // presenter.setShowErrorsMode = function () {
+    // };
+
+    // presenter.setWorkMode = function () {
+    // };
+
+    // presenter.reset = function () {
+    // };
+
+    presenter.getState = function () {
+        return JSON.stringify({ firstEntry: firstEntry });
+    };
+
+    presenter.setState = function (state) {
+        if (state === undefined || state === &apos;&apos;) {
+            firstEntry = true;
+        } else {
+            let parsedState = JSON.parse(state);
+            firstEntry = parsedState.firstEntry;
+        }
+    };
+
+    return presenter;
+}</presenter></addon>

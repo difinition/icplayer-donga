@@ -1,0 +1,13 @@
+/* https://code.google.com/p/android/issues/detail?id=35474 */
+div.Viewer_3D_frame {
+    overflow: hidden;
+    overflow-x: visible;
+}
+
+div.viewer-3d-wrapper {
+    overflow: hidden;
+    overflow-x: visible;
+    -ms-touch-action: none;
+    touch-action: none;
+}
+

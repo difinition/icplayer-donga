@@ -1,0 +1,87 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+
+<addon id='Table' xmlns="http://icplayer.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://icplayer.com ../../tools/addon.xsd">
+	<model>
+		<property name='Rows' nameLabel="Table_property_rows" type='string' />
+		<property name="Columns" nameLabel="Table_property_columns" type="string" />
+		<property name="Table cells" nameLabel="Table_property_table_cells" type="list" isDefault="true">
+			<property name="Row" nameLabel="Table_property_row" type="string" />
+			<property name="Column" nameLabel="Table_property_column" type="string" />
+			<property name="Content" nameLabel="Table_property_content" type="html" isLocalized="true" />
+            <property name="CSS Class" nameLabel="Table_property_css_class" type="string" />
+            <property name="CSS Style" nameLabel="Table_property_css_style" type="string" />
+		</property>
+		<property name="Columns width" nameLabel="Table_property_columns_width" type="list">
+			<property name="Width" nameLabel="Table_property_width" type="string" />
+		</property>
+		<property name="Rows height" nameLabel="Table_property_rows_height" type="list">
+			<property name="Height" nameLabel="Table_property_height" type="string" />
+		</property>
+		<property name="Is not an activity" nameLabel="Table_property_is_not_an_activity" type="boolean" />
+		<property name="Is disabled" nameLabel="Table_property_is_disabled" type="boolean" />
+		<property name="Case sensitive" nameLabel="Table_property_case_sensitive" type="boolean" />
+		<property name="useNumericKeyboard" nameLabel="Table_property_use_numeric_keyboard" type="boolean" />
+		<property name="Ignore punctuation" nameLabel="Table_property_ignore_punctuation" type="boolean" />
+		<property name="Gap width" nameLabel="Table_property_gap_width" type="string" />
+        <property name="Gap Type" nameLabel="Table_property_gap_type" type="{editable, draggable, math}" />
+		<property name="GapMaxLength" displayName="Gap max length" nameLabel="Table_property_gap_max_length" type="string" value="0"/>
+		<property name="newWidthCalculate" nameLabel="Table_property_new_width_calculate" type="boolean"/>
+		<property name="langAttribute" displayName="Lang attribute" nameLabel="Table_property_lang_attribute" type="string"/>
+		<property name="speechTexts" displayName="Speech texts" nameLabel="Hierarchical_Lesson_Report_property_speech_texts" type="staticlist">
+
+            <property name="Correct" nameLabel="choice_item_correct" type="staticrow">
+                <property name="Correct" nameLabel="choice_item_correct" type="string"/>
+            </property>
+
+			<property name="Wrong" nameLabel="choice_item_wrong" type="staticrow">
+                <property name="Wrong" nameLabel="choice_item__wrong" type="string"/>
+            </property>
+
+			<property name="Empty" nameLabel="choice_item_empty" type="staticrow">
+                <property name="Empty" nameLabel="choice_item_empty" type="string"/>
+            </property>
+
+			<property name="Gap" nameLabel="choice_item_gap" type="staticrow">
+                <property name="Gap" nameLabel="choice_item_gap" type="string"/>
+            </property>
+
+			<property name="Dropdown" nameLabel="choice_item_dropdown" type="staticrow">
+                <property name="Dropdown" nameLabel="choice_item_dropdown" type="string"/>
+            </property>
+
+			<property name="Inserted" nameLabel="text_insert" type="staticrow">
+                <property name="Inserted" nameLabel="text_insert" type="string"/>
+            </property>
+
+			<property name="Removed" nameLabel="text_removed" type="staticrow">
+                <property name="Removed" nameLabel="text_removed" type="string"/>
+            </property>
+
+			<property name="Cell" nameLabel="Table_cell" type="staticrow">
+                <property name="Cell" nameLabel="Table_cell" type="string"/>
+            </property>
+
+			<property name="Row" nameLabel="Table_row_speech_text" type="staticrow">
+				<property name="Row" nameLabel="Table_row_speech_text" type="string"/>
+			</property>
+
+			<property name="Column" nameLabel="Table_column_speech_text" type="staticrow">
+				<property name="Column" nameLabel="Table_column_speech_text" type="string"/>
+			</property>
+
+			<property name="RowSpan" nameLabel="Table_row_span_speech_text" type="staticrow">
+				<property name="RowSpan" nameLabel="Table_row_span_speech_text" type="string"/>
+			</property>
+
+			<property name="ColSpan" nameLabel="Table_column_span_speech_text" type="staticrow">
+				<property name="ColSpan" nameLabel="Table_column_span_speech_text" type="string"/>
+			</property>
+
+		</property>
+		<property name="printable" nameLabel="printable_name_label" type="{No, Don't randomize, Randomize}" />
+		<property name="keepOriginalOrder" nameLabel="Table_property_keep_order" type="boolean" />
+		<property name="isSplitInPrintBlocked" nameLabel="printable_block_split_label" type="boolean"/>
+		<property name="isFirstRowHeader" nameLabel="Table_property_first_row_is_header" type="boolean"/>
+		<property name="isFirstColumnHeader" nameLabel="Table_property_first_column_is_header" type="boolean"/>
+	</model>
+</addon>

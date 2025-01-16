@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<page>
+
+	<modules>
+		<orderingModule id="22243e" left="15" top="20" width="400" height="100">
+			<ordering isVertical="false" isActivity='True'/>
+			<item>Pierwszy</item>
+			<item>Drugi</item>
+			<item>Trzeci</item>
+			<item>Czwarty</item>
+		</orderingModule>
+
+		<orderingModule id="22243d" left="15" top="150" width="400" height="100">
+			<ordering isVertical="false" />
+			<item>1</item>
+			<item>2</item>
+			<item>3</item>
+		</orderingModule>
+
+		<pageProgressModule id="c3" left="15" top="300" width="300" height="50">
+		</pageProgressModule>
+
+		<buttonModule  left="350" top="300" width="50" height="50" style="">
+			<button type="checkAnswers" text=""/>
+		</buttonModule>
+		
+		<buttonModule  left="410" top="300" width="50" height="50" style="">
+			<button type="reset" text=""/>
+		</buttonModule>
+		
+		
+	</modules>
+
+</page>

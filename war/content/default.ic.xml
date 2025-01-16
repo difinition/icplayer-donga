@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<interactiveContent scoreType="last">
+
+<addons>
+	<addon-descriptor addonId="YouTube_Addon"/>
+	<addon-descriptor addonId="Vimeo"/>
+	<addon-descriptor addonId="gamememo"/>
+	<addon-descriptor addonId="Connection"/>
+	<addon-descriptor addonId="Single_State_Button"/>
+	<addon-descriptor addonId="Double_State_Button"/>
+	<addon-descriptor addonId="Event_Listener"/>
+	<addon-descriptor addonId="DebugAddon" href="addons/debug.addon.xml"/>
+	<addon-descriptor addonId="EventMonitor" href="addons/eventmonitor.addon.xml"/>
+	<addon-descriptor addonId="EventSource" href="addons/eventsource.addon.xml"/>
+	<addon-descriptor addonId="ParserDebug" href="addons/parser-debug.addon.xml"/>
+	<addon-descriptor addonId="Puzzle" href="addons/Puzzle.xml"/>
+</addons>
+
+<style>
+.ic_player{background-color: red; margin-left:0;}
+.ic_page{
+	background-color: #efefef;
+	font-size:18px;
+	width:	800px;
+	height:	600px;
+}
+.ic_footer{background-color: #e0e0ff; width: 100%;}
+.ic_header{background-color: #e0e0ff; width: 100%;}
+.myText{background-color:yellow; border:1px solid blue;}
+.silver{background-color:silver;}
+.lightgreen{background-color:lightgreen;}
+.text_paragraph_withEditableGaps input{
+	border: 1px solid #B0BDD2;
+	border-radius: 5px 5px 5px 5px;
+	display: block;
+	font-size: 17px;
+	height: 25px;
+	width: 100%;
+	overflow: hidden;
+}
+.ic_navi_panel_prev, .ic_navi_panel_next {
+    background-color: rgba(187, 187, 187, 0.72);
+    background-image: url("/file/serve/6676260642095104");
+    background-position: center center;
+    background-repeat: no-repeat;
+    border-radius: 0 10px 10px 0;
+    cursor: pointer;
+    display: block;
+    height: 80px;
+    width: 80px;
+}
+</style>
+
+<pages>
+	<page name="test" href="pages/test.xml"/>
+	<page name="eventbus" href="pages/eventbus.page.xml"/>
+	<page id="schoice" name="schoice" href="pages/schoice.page.xml"/>
+	<page name="draggable" href="pages/draggable-gaps.page.xml"/>
+	<page id="report" name="report" href="pages/report.page.xml" reportable="false"/>
+	
+	<folder name="commons">
+		<page name="popup1" href="pages/popup.page.xml"/>
+		<page name="header" href="pages/header.xml"/>
+		<page name="footer" href="pages/footer.xml"/>
+	</folder>
+	
+	<!--
+	<chapter name="chapter 1">
+		<page name="schoice" href="pages/schoice.page.xml"/>
+		<chapter name="chapter 1.1">
+			<page name="mchoice" href="pages/mchoice.page.xml"/>
+		</chapter>
+		<page name="Math page, $$ f = \frac{x}{2}$$" href="pages/math.page.xml"/>
+	</chapter>
+	<page name="ordering" href="pages/ordering.page.xml" reportable="true"/>
+	<page name="Show popup" href="pages/showpopup.page.xml"/>
+	<page name="image source" href="pages/image-source.xml"/>
+	<page name="links" href="pages/links.page.xml" reportable="false"/>
+	<page name="youtube" href="pages/youtube.page.xml"/>
+	<page name="test" href="pages/test.xml"/>
+	<page name="open-popup" href="pages/open-popup.xml"/>
+	<page name="inline choice" href="pages/inline-choice.page.xml"/>
+	<page name="cloze" href="pages/cloze.page.xml"/>
+	<page name="layout" href="pages/layout.page.xml"/>
+	<page name="Puzzles" href="pages/puzzle.page.xml"/>
+	<page name="open-popup" href="pages/open-popup.xml"/>
+	<page name="layout2" href="pages/layout2.page.xml"/>
+	<page name="problem" href="pages/problem.page.xml"/>
+	<page name="problem" href="pages/problem.page.xml"/>
+	<page name="addon" href="pages/addon.page.xml"/>
+	<page name="test" href="pages/connection.page.xml"/>
+	<page name="no addon" href="pages/no-addon.page.xml"/>
+	<page name="vimeo" href="pages/vimeo.page.xml"/>
+	<page name="images" href="pages/images.xml"/>
+	<page name="goto" href="pages/goto.page.xml"/>
+	<page name="feedback addon" href="pages/feedback-addon.page.xml"/>
+	<page name="text parser" href="pages/text-parser.xml"/>
+	<page name="text" href="pages/text.page.xml"/> 
+	<page name="style-audio" href="pages/style-audio.page.xml"/>
+	<page name="image source" href="pages/image-source.xml"/>
+	<page name="events" href="pages/events.xml"/>
+	<page name="goto" href="pages/goto.page.xml"/>
+	<page name="feedback" href="pages/feedback.page.xml"/>
+	<page name="popup1" href="pages/popup.page.xml"/>
+	<page name="summary" href="pages/summary.xml"/>
+
+	<header ref="commons/header"/>
+	<footer ref="commons/footer"/>
+ 	-->
+ 	
+</pages>
+
+</interactiveContent>

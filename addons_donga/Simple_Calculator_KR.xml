@@ -1,0 +1,619 @@
+<?xml version="1.0" encoding="utf-8"?><addon id="Simple_Calculator_KR"><metadata/><model/><resources/><css>.calculator {
+    height: 370px;
+}
+.calculator .close-button {
+    border-radius: 50%;
+    background-image: url(../viewers/aidt_viewer/core/resources/4571043841835008.png);
+
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 25px;
+    height: 25px;
+    position: absolute;
+    top: 0px;
+    left: 375px;
+}
+.calculator .calculator-move {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    position: absolute;
+    background: white;
+    height: 25px;
+    position: relative;
+}
+.calculator .calculator-wrapper {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 400px;
+  height: 370px;
+  background:white;
+}
+.calculator .calculator-screen {
+  width: 400px;
+  height: 80px;
+  border: none;
+  background: none;
+  background-color: #252525;
+  color: #fff;
+  text-align: right;
+  padding-right: 10px;
+  padding-left: 10px;
+  box-sizing: border-box;
+  font-size: 50px;
+  line-height: 80px;
+  position: absolute;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.calculator .calculator-screen span {
+    float: right;
+}
+.calculator button {
+  height: 40px;
+  border-radius: 3px;
+  border: 1px solid #c4c4c4;
+  background-color: transparent;
+  font-size: 26px;
+  color: #333;
+  background-image: linear-gradient(to bottom,transparent,transparent 50%,rgba(0,0,0,.04));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.05), inset 0 1px 0 0 rgba(255,255,255,.45), inset 0 -1px 0 0 rgba(255,255,255,.15), 0 1px 0 0 rgba(255,255,255,.15);
+  text-shadow: 0 1px rgba(255,255,255,.4);
+}
+
+.calculator button:hover {
+  background-color: #eaeaea;
+}
+
+.calculator .operator {
+  color: #37246a;
+}
+
+.calculator .all-clear {
+  background-color: #f0595f;
+  border-color: #b0353a;
+  color: #fff;
+}
+
+.calculator .all-clear:hover {
+  background-color: #f17377;
+}
+
+.calculator .equal-sign {
+  background-color: #37246a;
+  border-color: #37246a;
+  color: #fff;
+  height: 100%;
+  grid-area: 2 / 4 / 6 / 5;
+}
+
+.calculator .equal-sign:hover {
+  background-color: #9880b7;
+}
+
+.calculator .calculator-keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 10px;
+  padding: 10px;
+      position: relative;
+    top: 80px;
+}</css><view>&lt;div class=&quot;calculator&quot;&gt;
+    &lt;div class=&quot;calculator-wrapper&quot;&gt;
+        &lt;div class=&quot;calculator-move&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;calculator-screen&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;/div&gt;
+        &lt;div class=&quot;calculator-keys&quot;&gt;
+            &lt;button type=&quot;button&quot; class=&quot;operator&quot; value=&quot;+&quot;&gt;+&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;operator&quot; value=&quot;-&quot;&gt;-&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;operator&quot; value=&quot;*&quot;&gt;×&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;operator&quot; value=&quot;/&quot;&gt;÷&lt;/button&gt;
+
+            &lt;button type=&quot;button&quot; value=&quot;7&quot;&gt;7&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;8&quot;&gt;8&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;9&quot;&gt;9&lt;/button&gt;
+
+
+            &lt;button type=&quot;button&quot; value=&quot;4&quot;&gt;4&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;5&quot;&gt;5&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;6&quot;&gt;6&lt;/button&gt;
+
+
+            &lt;button type=&quot;button&quot; value=&quot;1&quot;&gt;1&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;2&quot;&gt;2&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;3&quot;&gt;3&lt;/button&gt;
+
+
+            &lt;button type=&quot;button&quot; value=&quot;0&quot;&gt;0&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;decimal&quot; value=&quot;.&quot;&gt;.&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;all-clear&quot; value=&quot;all-clear&quot;&gt;C&lt;/button&gt;
+
+            &lt;button type=&quot;button&quot; class=&quot;equal-sign operator&quot; value=&quot;=&quot;&gt;=&lt;/button&gt;
+        &lt;/div&gt;    
+  &lt;/div&gt;
+  &lt;div class=&quot;close-button&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;</view><preview>&lt;div class=&quot;calculator&quot;&gt;
+    &lt;div class=&quot;calculator-wrapper&quot;&gt;
+        &lt;div class=&quot;calculator-move&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;calculator-screen&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;/div&gt;
+        &lt;div class=&quot;calculator-keys&quot;&gt;
+            &lt;button type=&quot;button&quot; class=&quot;operator&quot; value=&quot;+&quot;&gt;+&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;operator&quot; value=&quot;-&quot;&gt;-&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;operator&quot; value=&quot;*&quot;&gt;×&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;operator&quot; value=&quot;/&quot;&gt;÷&lt;/button&gt;
+
+            &lt;button type=&quot;button&quot; value=&quot;7&quot;&gt;7&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;8&quot;&gt;8&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;9&quot;&gt;9&lt;/button&gt;
+
+
+            &lt;button type=&quot;button&quot; value=&quot;4&quot;&gt;4&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;5&quot;&gt;5&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;6&quot;&gt;6&lt;/button&gt;
+
+
+            &lt;button type=&quot;button&quot; value=&quot;1&quot;&gt;1&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;2&quot;&gt;2&lt;/button&gt;
+            &lt;button type=&quot;button&quot; value=&quot;3&quot;&gt;3&lt;/button&gt;
+
+
+            &lt;button type=&quot;button&quot; value=&quot;0&quot;&gt;0&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;decimal&quot; value=&quot;.&quot;&gt;.&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;all-clear&quot; value=&quot;all-clear&quot;&gt;C&lt;/button&gt;
+
+            &lt;button type=&quot;button&quot; class=&quot;equal-sign operator&quot; value=&quot;=&quot;&gt;=&lt;/button&gt;
+        &lt;/div&gt;    
+  &lt;/div&gt;
+  &lt;div class=&quot;close-button&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;</preview><presenter>function AddonSimple_Calculator_KR_create(){
+	//function AddonAGA_SimpleCalculator_create(){
+    // Keyboard support added
+    var presenter = function(){}
+    
+    presenter.configuration = {
+        isValid: true,
+        isVisible: false,
+        addonID: &quot;&quot;
+    };
+
+    presenter.state = {
+        isVisible: false,
+        shadedMode: false
+    };
+    
+    presenter.connectHandlers = function () {        
+        presenter.calculator[0].addEventListener('keydown', presenter.onKeyDown);
+    };
+
+    presenter.disconnectHandlers = function () {
+        presenter.calculator[0].removeEventListener('keydown', presenter.onKeyDown);
+    };
+    
+    presenter.onKeyDown = function (event) {
+        function stopEvent () {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        stopEvent();
+        switch (event.key) {
+            case 'c':    //c
+                presenter.keyC();
+                stopEvent();
+                break;
+            case 'C':    //C
+                presenter.keyC();
+                stopEvent();
+                break;
+            case 'Escape':    //C
+                presenter.keyC();
+                stopEvent();
+                break;
+            case '+':    //+
+                presenter.checkOperator(event.key);
+                stopEvent();
+                break;
+            case '=':    //=
+                presenter.keyEquals();
+                stopEvent();
+                break;
+            case 'Enter':    //=
+                presenter.keyEquals();
+                stopEvent();
+                break;
+            case '-':    //-
+                presenter.checkOperator(event.key);
+                stopEvent();
+                break;
+            case '*':    //+
+                var sign = '×';
+                presenter.checkOperator(sign);
+                stopEvent();
+                break;
+            case '/':    //+
+                var sign = '÷';
+                presenter.checkOperator(sign);
+                stopEvent();
+                break;
+            case '0':    //0
+                presenter.addValue(event.key);
+                stopEvent();
+                break;
+            case '1':    //1
+                presenter.addValue(event.key);
+                stopEvent();
+                break;
+            case '2':    //2
+                presenter.addValue(event.key);
+                stopEvent();
+                break;
+            case '3':    //3
+                presenter.addValue(event.key);
+                stopEvent();
+                break;
+            case '4':    //4
+                presenter.addValue(event.key);
+                stopEvent();
+                break;
+            case '5':    //5
+                presenter.addValue(event.key);
+                stopEvent();
+                break;
+            case '6':    //6
+                presenter.addValue(event.key);
+                stopEvent();
+                break;
+            case '7':    //7
+                presenter.addValue(event.key);
+                stopEvent();
+                break;
+            case '8':    //8
+                presenter.addValue(event.key);
+                stopEvent();
+                break;
+            case '9':    //9
+                presenter.addValue(event.key);
+                stopEvent();
+                break;
+            case '.':    //dot
+                if(!presenter.decimalAdded || presenter.equalsPressed) {
+                    presenter.addDot();
+                }
+                break;
+            case ',':    //dot
+                var key = '.';
+                if(!presenter.decimalAdded || presenter.equalsPressed) {
+                    presenter.addDot();
+                }
+                break;
+            case 'Backspace':    //dot
+                presenter.removeSign();
+                break;
+            
+        }
+    };
+    
+    presenter.addDot = function() {
+        var equation = presenter.input;
+        var lastChar = equation[equation.length - 1];
+        if (presenter.equalsPressed) {
+            var toBeAdded = '0.';
+        } else {
+            var operators = ['+', '-', '×', '÷'];
+            if (operators.indexOf(lastChar) &gt; -1) {
+                var toBeAdded = '0.';
+            } else {
+                var toBeAdded = '.';
+            }            
+        }
+        presenter.addValue(toBeAdded);
+        presenter.decimalAdded = true;
+        
+    }
+    
+    presenter.checkOperator = function(operator) {
+        presenter.equalsPressed = false;
+        var operators = ['+', '-', '×', '÷'];
+        var input = presenter.calculator.find('.calculator-screen span')[0];
+        var inputVal = input.innerHTML;
+        var lastChar = inputVal[inputVal.length - 1];
+        if (inputVal != '' &amp;&amp; operators.indexOf(lastChar) == -1) {
+            if (lastChar == '.') {
+                presenter.removeLastValue();
+            }
+            presenter.addValue(operator);                    
+        } else if (inputVal == '' &amp;&amp; operator == '-') {
+            presenter.addValue(operator);
+        }
+        
+        if (operators.indexOf(lastChar) &gt; -1 &amp;&amp; inputVal.length &gt; 1) {
+            input.innerHTML = inputVal.replace(/.$/, operator);
+            presenter.input = presenter.input.replace(/.$/, operator);
+        }
+        
+        presenter.decimalAdded = false;
+    }
+    
+    presenter.setPlayerController = function(controller) {
+        presenter.playerController = controller;
+        presenter.eventBus = controller.getEventBus();
+        presenter.presentation = controller.getPresentation();
+        presenter.commander = controller.getCommands();
+    };
+    
+    presenter.destroy = function () {
+        presenter.view.removeEventListener('DOMNodeRemoved', presenter.destroy);
+        presenter.disconnectHandlers();
+    };
+    
+    presenter.keyC = function() {
+        var input = presenter.calculator.find('.calculator-screen span')[0];
+        input.innerHTML = '0';
+        presenter.decimalAdded = false;
+        presenter.input = input.innerHTML;
+        presenter.equalsPressed = false;
+    };
+    
+    presenter.keyEquals = function() {
+        var input = presenter.calculator.find('.calculator-screen span')[0];
+        var equation = presenter.input;
+        var lastChar = equation[equation.length - 1];
+        equation = equation.toString().replace(/×/g, '*').replace(/÷/g, '/');
+        var operators = ['+', '-', '×', '÷'];
+        if (operators.indexOf(lastChar) &gt; -1 || lastChar == '.') {
+            equation = equation.replace(/.$/, '');
+        }
+        
+        if (equation) {
+            presenter.input = eval(equation);
+            input.innerHTML = eval(equation).toPrecision(13).replace(/0+$/, '').replace(/\.$/, ''); // rounding to remove incorrect endings
+            i = 12;
+            while(input.offsetWidth &gt; 380) {
+                input.innerHTML = eval(equation).toPrecision(i).replace(/0+$/, '').replace(/\.$/, '');
+                i--;
+            }
+        }                    
+        presenter.decimalAdded = false;
+        presenter.equalsPressed = true;
+    };
+    
+    presenter.removeLastValue = function() {
+        var input = presenter.calculator.find('.calculator-screen span')[0];
+        input.innerHTML = input.innerHTML.toString().slice(0,-1);
+        presenter.input = presenter.input.toString().slice(0,-1);
+    };
+    
+    presenter.removeSign = function() {
+        if (!presenter.equalsPressed) {
+            var operators = ['+', '-', '×', '÷'];
+            var input = presenter.calculator.find('.calculator-screen span')[0];
+            var inputVal = input.innerHTML;
+            var lastChar = inputVal[inputVal.length - 1];
+            if (lastChar == '.') {
+                presenter.decimalAdded = false;
+                presenter.removeLastValue();
+            } else if (operators.indexOf(lastChar) &gt; -1) {
+                var numbers=inputVal.toString().split(/\+|\-|×|÷/);
+                if (numbers[numbers.length-2].indexOf('.') &gt; -1) {
+                    presenter.decimalAdded = true;
+                }
+                presenter.removeLastValue();                
+            } else if (lastChar != '') {
+                presenter.removeLastValue();
+            }
+            if (input.innerHTML == '') {
+                presenter.keyC();
+            }
+        }
+    }
+    
+    presenter.addValue = function(key) {
+        var input = presenter.calculator.find('.calculator-screen span')[0];
+        var operators = ['+', '-', '×', '÷'];
+        if (presenter.equalsPressed || (input.innerHTML == '0' &amp;&amp; key != '.' &amp;&amp; operators.indexOf(key) == -1)) {
+            input.innerHTML = key;
+            presenter.input = key;
+        } else {
+            input.innerHTML += key;
+            presenter.input += key;
+        }
+        presenter.equalsPressed = false;
+    };
+    
+    presenter.sendEventData = function (name) {
+        var eventData = {
+            source : presenter.configuration.addonID,
+            item : '',
+            value : name,
+            score : ''
+        };
+        if (presenter.playerController !== null) {
+            presenter.playerController.getEventBus().sendEvent('ValueChanged', eventData);
+        }
+    };
+    presenter.run = function(view, model){
+        presenter.$view = $(view);
+        presenter.view = view;
+        presenter.configuration.addonID = model['ID']
+        presenter.calculator = presenter.$view.find('.calculator');
+        presenter.configuration.isVisible = ModelValidationUtils.validateBoolean(model['Is Visible']);
+        presenter.state.isVisible = presenter.configuration.isVisible;
+        presenter.updateVisibility();
+        presenter.input = '';
+        var operators = ['+', '-', '×', '÷'];
+        presenter.decimalAdded = false;
+        presenter.equalsPressed = false;
+        
+        presenter.startLeft = presenter.$view[0].style.left;
+        presenter.startTop = presenter.$view[0].style.top;
+        presenter.connectHandlers();
+        
+        presenter.$view.find('.close-button').on(&quot;click touchstart&quot;,function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            presenter.hide();
+            presenter.sendEventData('close');
+        });
+        
+        presenter.$view.find('.calculator-keys').on(&quot;click touchstart&quot;,&quot;button&quot;,function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            var input = presenter.calculator.find('.calculator-screen span')[0];
+            var inputVal = input.innerHTML;
+            var btnVal = this.innerHTML;
+            presenter.mouseIsDown = false;
+            
+            if(btnVal == 'C') {
+                presenter.keyC();
+            } else if (btnVal == '=') { 
+                presenter.keyEquals();
+            } else if (operators.indexOf(btnVal) &gt; -1) {
+                presenter.checkOperator(btnVal);
+                presenter.decimalAdded = false;
+            } else if (btnVal == '.') {
+                if(!presenter.decimalAdded) {
+                    presenter.addDot();
+                }
+            } else if (btnVal == '←') {
+                presenter.removeSign();
+            } else {
+                presenter.addValue(btnVal);
+            }             
+        });
+        var i, t, x1, y1, style, firxtX, firstY, x, y, xNew, yNew, xOld, yOld, elemenet;
+        presenter.$view.find('.calculator').on('mousedown touchstart',function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            presenter.calculator.focus();
+            if (e.type == 'mousedown') {
+                var elem = (e.toElement != undefined) ? e.toElement : e.target;
+            }
+            if ((e.type == 'mousedown' &amp;&amp; elem.type != 'button') || (e.type == 'touchstart' &amp;&amp; e.target.type != 'button')) {
+                var scaleInfo = presenter.playerController.getScaleInformation()
+                presenter.mouseIsDown = true;
+                if (e.type == 'mousedown') {
+                    x1=e.originalEvent.pageX/scaleInfo.scaleX;
+                    y1=e.originalEvent.pageY/scaleInfo.scaleY;
+                } else {
+                    x1=e.originalEvent.touches[0].pageX/scaleInfo.scaleX;
+                    y1=e.originalEvent.touches[0].pageY/scaleInfo.scaleY;
+                } 
+                elemenet = presenter.$view;
+                style = elemenet[0].style;
+                yOld = parseInt(style.top.substring(0,style.top.length-2));
+                xOld = parseInt(style.left.substring(0,style.left.length-2));
+            }
+        });
+        presenter.$view.find('.calculator').on('mousemove touchmove', function(e){
+            e.stopPropagation();
+            e.preventDefault();
+            if(presenter.mouseIsDown){
+                var scaleInfo = presenter.playerController.getScaleInformation();
+                if (e.type == 'mousemove') {
+                    x=e.originalEvent.pageX/scaleInfo.scaleX;
+                    y=e.originalEvent.pageY/scaleInfo.scaleY;
+                } else {
+                    x=e.originalEvent.touches[0].pageX/scaleInfo.scaleX;
+                    y=e.originalEvent.touches[0].pageY/scaleInfo.scaleY;
+                };
+                xNew = x - presenter.$view.offset().left;
+                yNew = y - presenter.$view.offset().top;
+                        
+                elemenet = presenter.$view;
+                elemenet[0].style.left = xOld + x - x1 +'px';
+                elemenet[0].style.top = yOld + y - y1 +'px';
+                
+            }
+        });
+        presenter.$view.on('mouseup mouseleave touchend touchleave',function(e){
+                e.preventDefault();
+                e.stopPropagation();
+                presenter.mouseIsDown = false;
+        });                 
+    };
+    
+    presenter.executeCommand = function (name, params) {
+        var commands = {
+            'show': presenter.show,
+            'hide': presenter.hide
+        };
+
+        return Commands.dispatch(commands, name, params, presenter);
+    };
+    
+    presenter.show = function () {
+        presenter.state.isVisible = true;
+        if (presenter.$view.css(&quot;visibility&quot;) == 'hidden') {
+            presenter.$view.css(&quot;visibility&quot;, &quot;visible&quot;);
+            presenter.calculator.focus();
+            presenter.$view[0].style.left = presenter.startLeft;
+            presenter.$view[0].style.top = presenter.startTop;
+        }
+    };
+
+    presenter.hide = function () {
+        presenter.state.isVisible = false;
+        presenter.$view.css(&quot;visibility&quot;, &quot;hidden&quot;);
+    };
+
+    presenter.updateVisibility = function() {
+        (presenter.state.isVisible) ? presenter.show() : presenter.hide();
+    };
+    
+    presenter.updateInput = function() {
+        var input = presenter.calculator.find('.calculator-screen span')[0];
+        input.innerHTML = presenter.tmpInput;
+    };
+
+    presenter.setShowErrorsMode = function(){
+    };
+    
+    presenter.setWorkMode = function(){
+    };
+    
+    presenter.reset = function(){
+        presenter.state.isVisible = presenter.configuration.isVisible;
+        presenter.updateVisibility();
+        presenter.input = '0';
+        presenter.tmpInput = '0';
+        presenter.equalsPressed = false;
+        presenter.updateInput();
+    };
+    
+    presenter.getErrorCount = function(){
+        return 0;
+    };
+    
+    presenter.getMaxScore = function(){
+        return 0;
+    };
+    
+    presenter.getScore = function(){
+        return 0;
+    };
+    
+    presenter.getState = function(){
+        var input = presenter.calculator.find('.calculator-screen span')[0];
+        presenter.tmpInput = input.innerHTML;
+        return JSON.stringify({
+            isVisible: presenter.state.isVisible,
+            input: presenter.input,
+            tmpInput: presenter.tmpInput
+        });
+    };
+
+    presenter.setState = function(state){
+        if (state === undefined || state === '') {
+            presenter.state.isVisible = false;
+            presenter.input = '0';
+            presenter.tmpInput = '0';
+        } else {
+            var parsedState = JSON.parse(state);
+            presenter.state.isVisible = parsedState.isVisible;
+            presenter.input = parsedState.input;
+            presenter.tmpInput = parsedState.tmpInput;
+        }
+        presenter.updateVisibility();
+        presenter.updateInput();
+    };
+
+    return presenter;
+}</presenter></addon>

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+
+<addon id='Glossary' xmlns="http://icplayer.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://icplayer.com ../../tools/addon.xsd">
+	<model>
+		<property name='List of words' nameLabel="Glossary_property_list_of_words" type='list'>
+            <property name="ID" nameLabel="Glossary_property_id" type="string" />
+            <property name="Text" nameLabel="Glossary_property_text" type="string" isLocalized="true" />
+            <property name="Description" nameLabel="Glossary_property_description" type="html" isLocalized="true" />
+        </property>
+        <property displayName="Show In Editor" name="Visible" nameLabel="Glossary_property_show_in_editor" type="boolean" />
+        <property name="Open external link in" nameLabel="Glossary_property_open_external_link_in" type="{New tab, Same tab}" />
+	</model>
+</addon>

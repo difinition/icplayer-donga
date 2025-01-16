@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+
+<addon id="LearnPen_Data" xmlns="http://icplayer.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://icplayer.com ../../tools/addon.xsd">
+    <model>
+        <property name="isDisable" nameLabel="LearnPen_Data_property_is_disable" type="boolean" />
+        <property name="stepsAndColors" nameLabel="LearnPen_Data_property_colors_and_steps" type="text" />
+        <property name="refreshTime" nameLabel="LearnPen_Data_property_refresh_time" type="string" />
+    </model>
+</addon>

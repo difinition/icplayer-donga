@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+
+<addon id='Animated_Page_Progress' xmlns="http://icplayer.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://icplayer.com ../../tools/addon.xsd">
+	<model>
+		<property name="Ranges" nameLabel="Animated_Page_Progress_property_ranges" type="list">
+            <property name="Score" nameLabel="Animated_Page_Progress_property_score" type="string"/>
+		    <property name="Image" nameLabel="Animated_Page_Progress_property_image" type="image"/>
+		</property>
+        <property name="Initial image" nameLabel="Animated_Page_Progress_property_initial_image" type="image" />
+        <property name="Work in Check Mode" displayName="Work in Check Mode" nameLabel="Animated_Page_Progress_property_work_in_check_mode" type="boolean" />
+	</model>
+</addon>

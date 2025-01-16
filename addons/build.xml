@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="icplayer-addons" default="copy" basedir=".">
+	<property name="addons.dest" location="../src/main/java/com/lorepo/icplayer/public/addons" />
+	<property name="addons.src" location="." />
+	<property name="addons.list.delimiter" value="|" />
+	<property name="addons.list.temp.file" value="addons.list.temp" />
+
+    <target name="build-webpack" description="Install node dependencies for gulp and less">
+        <!--<exec executable="python" failonerror="true">
+            <arg value="tools/build-webpack.py"/>
+        </exec>-->
+    </target>
+
+	<target name="copy" depends="build-webpack">
+		<taskdef name="copyAddon" classname="com.icplayer.ac.AddonCompiler" classpath="addon-compiler.jar"/>
+		<taskdef name="for" classname="com.icplayer.ac.ForTask" classpath="addon-compiler.jar"/>
+		<mkdir dir="${addons.dest}" />
+		<mkdir dir="${addons.dest}/resources" />
+		<delete>
+			<fileset dir="${addons.dest}"/>
+		</delete>
+
+
+		<copy file="addons.list" tofile="${addons.list.temp.file}" />
+		<replaceregexp file="${addons.list.temp.file}"
+					   match="\s*\r?\n"
+					   flags="g"
+					   replace="${addons.list.delimiter}">
+		</replaceregexp>
+
+        <loadfile property="addons.list" srcFile="${addons.list.temp.file}"/>
+        <for list="${addons.list}" param="addonid" delimiter="${addons.list.delimiter}">
+            <sequential>
+                <echo>Copying @{addonid} addon</echo>
+                <copyAddon src="${addons.src}" dest="${addons.dest}" addon="@{addonid}"/>
+            	<copy file="${addons.src}/@{addonid}/src/icon.png" tofile="${addons.dest}/@{addonid}.png"/>
+            	<copy todir="${addons.dest}/resources" failonerror="false" quiet="true">
+            		<fileset dir="${addons.src}/@{addonid}/src/resources"/>
+            	</copy>
+            </sequential>
+        </for>
+
+		<delete file="${addons.list.temp.file}" failonerror="false" />
+	</target>
+
+</project>

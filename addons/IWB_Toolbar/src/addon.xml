@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+
+<addon id='IWB_Toolbar' xmlns="http://icplayer.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://icplayer.com ../../tools/addon.xsd">
+    <model>
+        <property name="floatingImages" displayName="Floating Images" nameLabel="IWB_Toolbar_property_floating_images" type="list">
+            <property name="Image" nameLabel="IWB_Toolbar_property_image" type="image" />
+        </property>
+        <property name="widthWhenOpened" displayName="Width When Opened" nameLabel="IWB_Toolbar_property_width_when_opened" type="string" />
+        <property name="Fixed Position" nameLabel="IWB_Toolbar_property_fixed_position" type="boolean"/>
+
+        <property name="forPen" displayName="Show for pen" nameLabel="IWB_Toolbar_property_for_pen" type="{---, Color panel, Thickness panel}" />
+        <property name="forMarker" displayName="Show for marker" nameLabel="IWB_Toolbar_property_for_marker" type="{---, Color panel, Thickness panel}" />
+        <property name="keepStateAndPosition" displayName="Keep state and position" nameLabel="IWB_Toolbar_property_keep_state_and_position" type="boolean" />
+        <property name="Closed panel drawing" nameLabel="IWB_Toolbar_property_closed_panel_drawing" type="boolean" />
+        <property name="hasCustomButton" nameLabel="IWB_Toolbar_property_has_custom_button" type="boolean" />
+        <property name="onCustomButtonSelected" nameLabel="IWB_Toolbar_property_on_custom_button_selected" type="event" isDefault="true" />
+        <property name="onCustomButtonDeselected" nameLabel="IWB_Toolbar_property_on_custom_button_deselected" type="event" />
+        <property name="enableUndoRedo" nameLabel="IWB_Toolbar_property_enable_undo_redo" type="boolean" />
+        <property name="disableModuleZoom" nameLabel="IWB_Toolbar_property_disable_module_zoom" type="boolean" />
+        <property name="defaultZoom" nameLabel="IWB_Toolbar_property_default_zoom" type="string" />
+        <property name="expansionDirection" displayName="Expansion direction" nameLabel="IWB_Toolbar_expansion_direction" type="{right, left, up, down}" />
+        <property name="verticalPopupDirection" displayName="Vertical popups direction" nameLabel="IWB_Toolbar_vertical_popups_direction" type="{right, left}"/>
+        <property name="horizontalPopupDirection" displayName="Horizontal popups direction" nameLabel="IWB_Toolbar_horizontal_popups_direction" type="{down, up}"/>
+    </model>
+</addon>

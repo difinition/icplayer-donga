@@ -1,0 +1,110 @@
+<?xml version='1.0' encoding='UTF-8' ?><addon id='Algeomath_KR'><metadata></metadata><model><property name='{library}' displayName='Algeomath' type='script' isLocalized='false' isDefault='false' value='https://www.algeomath.kr/embed/script.js?key=PTCFCHXTWPSV'/><property name='Exercise type' displayName='' type='{Algeo 2D, Algeo 3D, Kids 2D, Kids 3D}, Exercise type' isLocalized='false' isDefault='false'/><property name='Initial file' displayName='Initial file' type='file' isLocalized='false' isDefault='false'/></model><resources></resources><css>.algeomath-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+.algeomath-exercise {
+    width: 100%;
+    height: 100%;
+}</css><view>&lt;div class=&quot;algeomath-container&quot;&gt;&lt;/div&gt;</view><preview>&lt;div class=&quot;algeomath-container&quot;&gt;&lt;/div&gt;</preview><presenter>function AddonAlgeomath_KR_create(){
+ 
+    var presenter = function () { };
+ 
+    presenter.setPlayerController = function (controller) {
+        presenter.playerController = controller;
+        presenter.eventBus = controller.getEventBus();
+        presenter.eventBus.addEventListener(&apos;ValueChanged&apos;, this);
+        presenter.eventBus.addEventListener(&apos;ShowAnswers&apos;, this);
+        presenter.eventBus.addEventListener(&apos;HideAnswers&apos;, this);
+        presenter.eventBus.addEventListener(&apos;PageLoaded&apos;, this);
+        presenter.eventBus.addEventListener(&apos;LimitedCheck&apos;, this);
+    };
+ 
+    presenter.run = function (view, model) {
+        presenter.view = view;
+        presenter.model = model; 
+
+        presenter.defaultVisibility = ModelValidationUtils.validateBoolean(model[&apos;Is Visible&apos;]);
+        presenter.isVisible = presenter.defaultVisibility;
+        presenter.setVisibility(presenter.defaultVisibility);
+        presenter.exercise = model[&apos;Exercise type&apos;] !== undefined &amp;&amp; model[&apos;Exercise type&apos;] !== &apos;&apos; ? model[&apos;Exercise type&apos;] : &apos;Algeo 2D&apos;;
+        presenter.initialFile = model[&apos;Initial file&apos;] !== undefined &amp;&amp; model[&apos;Initial file&apos;] !== &apos;&apos; ? model[&apos;Initial file&apos;] : false;
+
+        presenter.initiate(view, model, false);
+    };
+
+    presenter.createPreview = function (view, model) {
+        presenter.view = view;
+        presenter.model = model;
+
+        presenter.initiate(view, model, true);
+    };
+
+    presenter.initiate = function (view, model, isPreview) {
+        presenter.createExercise(presenter.exercise);
+    };
+
+    presenter.createExercise = function (type) {
+        let container = presenter.view.querySelector(&apos;.algeomath-container&apos;);
+        let components = {
+            &apos;Algeo 2D&apos;: &apos;algeo-2d&apos;,
+            &apos;Algeo 3D&apos;: &apos;algeo-3d&apos;,
+            &apos;Kids 2D&apos;: &apos;kids-2d&apos;,
+            &apos;Kids 3D&apos;: &apos;kids-3d&apos;
+        };
+        let element = document.createElement(`${components[type]}`);
+        element.className = &apos;algeomath-exercise&apos;;
+        container.innerHTML = &apos;&apos;
+        container.appendChild(element);
+        if (presenter.initialFile) element.setAttribute(&apos;initialdata&apos;, presenter.initialFile);
+    };
+
+    presenter.setVisibility = function (boolean) {
+        $(presenter.view).css(&apos;visibility&apos;, boolean ? &apos;visible&apos; : &apos;hidden&apos;);
+        presenter.isVisible = boolean;
+    };
+
+    presenter.show = function() {
+        presenter.setVisibility(true);
+    };
+
+    presenter.hide = function() {
+        presenter.setVisibility(false);
+    };
+ 
+    // === EVENTS ===
+    presenter.onEventReceived = function (eventName, eventData) {
+
+        if (eventData.source == undefined) return;
+ 
+    };
+ 
+    // === RESET ===
+    presenter.reset = function () {
+        
+    };
+ 
+ 
+    presenter.setState = function (state) {
+        let parsedState = JSON.parse(state);
+
+        presenter.isVisible = parsedState.isVisible;
+        presenter.setVisibility(presenter.isVisible);
+    };
+
+    presenter.getState = function () {
+        return JSON.stringify({
+            isVisible: presenter.isVisible,
+        });
+    };
+ 
+    presenter.executeCommand = function (name, params) {
+        let commands = {
+            &apos;show&apos;: presenter.show,
+            &apos;hide&apos;: presenter.hide
+        };
+        Commands.dispatch(commands, name, params, presenter);
+    };
+ 
+    return presenter;
+}</presenter></addon>

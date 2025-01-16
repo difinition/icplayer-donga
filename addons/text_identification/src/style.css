@@ -1,0 +1,53 @@
+.text-identification-content {
+    text-align: center;
+    position: absolute;
+}
+
+.text-identification-element-selected,
+.text-identification-element-correct,
+.text-identification-element-incorrect,
+.text-identification-element-mouse-hover,
+.text-identification-element {
+    border: 0 solid black;
+    padding: 0;
+    margin: 0;
+}
+
+.text-identification-container {
+    cursor: pointer;
+}
+
+.text-identification-background-image {
+    border: 0 solid white;
+    padding: 0;
+    margin: 0;
+    background-size: 100%;
+    background-position: 0 0;
+}
+
+.printable_addon_Text_Identification-wrapper {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 5px;
+}
+
+.printable_addon_Text_Identification-correct, .printable_addon_Text_Identification-selected {
+    border: 3px solid #999;
+}
+
+.printable_addon_Text_Identification-show-answers.printable_addon_Text_Identification-correct {
+    border: 3px dotted #999;
+}
+
+.printable_addon_Text_Identification-correct-answer, .printable_addon_Text_Identification-incorrect-answer {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.printable_addon_Text_Identification-correct-answer::after {
+    content: " \2714";
+}
+
+.printable_addon_Text_Identification-incorrect-answer::after {
+    content: " \2716";
+}

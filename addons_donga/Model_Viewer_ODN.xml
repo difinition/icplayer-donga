@@ -1,0 +1,405 @@
+<?xml version='1.0' encoding='UTF-8' ?><addon id='Model_Viewer_ODN'><metadata></metadata><model><property name='{library}' displayName='ModelViewerDotDev' type='module-script' isLocalized='false' isDefault='false' value='../libs/6511265455669248'/><property name='Model' displayName='' type='File' isLocalized='false' isDefault='false'/><property name='Poster' displayName='' type='File' isLocalized='false' isDefault='false'/><property name='Annotations' displayName='' type='Text' isLocalized='false' isDefault='false'/><property name='AnnotationsEN' displayName='English Annotations' type='Text' isLocalized='false' isDefault='false'/><property name='TitleEN' displayName='English Title' type='Text' isLocalized='false' isDefault='false'/><property name='EnvironmentImage' displayName='Environment Image' type='Image' isLocalized='false' isDefault='false'/><property name='SkyboxImage' displayName='Skybox Image' type='Image' isLocalized='false' isDefault='false'/><property name='ShadowIntensity' displayName='Shadow Intensity' type='String' isLocalized='false' isDefault='false' value='0'/><property name='ShadowSoftness' displayName='Shadow Softness' type='String' isLocalized='false' isDefault='false' value='1'/><property name='AutoRotate' displayName='Auto Rotate' type='boolean' isLocalized='false' isDefault='false'/><property name='Scale' displayName='Scale' type='String' isLocalized='false' isDefault='false' value='1'/><property name='ShowARButton' displayName='Show AR Button' type='boolean' isLocalized='false' isDefault='false' value='True'/><property name='ShowLabelsButton' displayName='Show Labels Button' type='boolean' isLocalized='false' isDefault='false' value='True'/><property name='LabelsEnabled' displayName='Labels Enabled on Start' type='boolean' isLocalized='false' isDefault='false' value='True'/><property name='AltText' displayName='Alt Text' type='String' isLocalized='false' isDefault='false'/><property name='Attributes' displayName='Additional Attributes' type='Text' isLocalized='false' isDefault='false'/><property name='CopyInfo' displayName='Copyright Info' type='html' isLocalized='false' isDefault='false'/></model><resources></resources><css>.md-webcam{
+    display: none;
+	position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+model-viewer {
+    user-select: none;
+    width: 100%;
+    height: 100%;
+    height: 725px !important;
+    background-color: transparent !important;
+}
+
+model-viewer::part(default-progress-bar){
+    background-color: #2196F3;
+}
+
+.buttonsContainer{
+    position: absolute;
+    top: 25px;
+    left: auto;
+    right: 25px;
+}
+
+    .arButton,.labelsButton,.copyButton{
+        width: 75px;
+        height: 50px;
+        text-align: center;
+        line-height: 50px;
+        background: #78909C;
+        color: #fff;
+        margin-bottom: 25px;
+        cursor: pointer;
+    }
+
+    .arButton-selected,.labelsButton-selected, .copyButton-selected{
+        background: #2196F3;
+        color: #fff;
+    }
+
+    .copyButton{
+        position: absolute;
+    }
+
+.copyMessage{
+    display: none;
+    position:absolute;
+    top: 0;
+    bottom: 75px;
+    left: 0;
+    right: 0;
+    background-color: rgba(0,0,0,0.2);
+}
+.copyMessage-visible{
+    display: block;
+}
+
+    .copyContainer{
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: -170px 0 0 -300px;
+        padding: 40px;
+        text-align: center;
+        width: 520px;
+        height: auto;
+        max-height: 220px;
+        overflow-y: auto;
+        background: #fff;
+        border-radius: 5px;
+        box-shadow: 0px 3px 5px 1px rgba(0,0,0,0.5);
+    }
+
+.Hotspot {
+  background: #fff;
+  border-radius: 32px;
+  border: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+  cursor: pointer;
+  height: 24px;
+  padding: 8px;
+  position: relative;
+  transition: opacity 0.3s;
+  width: 24px;
+}
+
+.Hotspot:not([data-visible]) {
+  background: transparent;
+  border: 4px solid #fff;
+  box-shadow: none;
+  height: 32px;
+  pointer-events: none;
+  width: 32px;
+}
+
+.Hotspot:focus {
+  border: 4px solid rgb(0, 128, 200);
+  height: 32px;
+  outline: none;
+  width: 32px;
+}
+
+.Hotspot &gt; * {
+  opacity: 1;
+  transform: translateY(-50%);
+}
+
+.HotspotAnnotation{
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  color: rgba(0, 0, 0, 0.8);
+  display: block;
+  font-family: Futura, Helvetica Neue, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  left: calc(100% + 1em);
+  max-width: 200px;
+  overflow-wrap: break-word;
+  padding: 0.5em 1em;
+  position: absolute;
+  top: 50%;
+  width: max-content;
+}
+
+.Hotspot:not([data-visible]) &gt; * {
+  opacity: 0.5;
+  pointer-events: none;
+  transform: translateY(calc(-50% + 4px));
+  transition: transform 0.3s, opacity 0.3s;
+}</css><view>&lt;video class=&quot;md-webcam&quot; autoplay playsinline width=&quot;1200&quot; height=&quot;800&quot;&gt;&lt;/video&gt;
+&lt;model-viewer
+alt=&quot;&quot;
+src=&quot;&quot;
+ar
+environment-image=&quot;&quot;
+skybox-image=&quot;&quot;
+poster=&quot;&quot;
+shadow-intensity=&quot;&quot;
+camera-controls
+touch-action=&quot;pan-y&quot;
+vr&gt;
+&lt;/model-viewer&gt;
+&lt;div class=&quot;copyMessage&quot;&gt;&lt;/div&gt;
+&lt;div class=&quot;buttonsContainer&quot;&gt;
+    &lt;div class=&quot;arButton&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;labelsButton&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;copyButton&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;</view><preview>&lt;video class=&quot;md-webcam&quot; autoplay playsinline width=&quot;1200&quot; height=&quot;800&quot;&gt;&lt;/video&gt;
+&lt;model-viewer
+alt=&quot;&quot;
+src=&quot;&quot;
+ar
+environment-image=&quot;&quot;
+skybox-image=&quot;&quot;
+poster=&quot;&quot;
+shadow-intensity=&quot;&quot;
+camera-controls
+touch-action=&quot;pan-y&quot;&gt;
+&lt;/model-viewer&gt;
+&lt;div class=&quot;copyMessage&quot;&gt;&lt;/div&gt;
+&lt;div class=&quot;buttonsContainer&quot;&gt;
+    &lt;div class=&quot;arButton&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;labelsButton&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;copyButton&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;</preview><presenter>function AddonModel_Viewer_ODN_create() {
+
+var presenter = function(){}
+    presenter.wasInitiated = false;
+    presenter.AnnotationsVisibility = &quot;visible&quot;;
+    presenter.isAREnabled = false;
+    
+    presenter.run = function(view, model){
+        //console.log(&quot;ModelViewerODN run!&quot;);
+        //console.log(&quot;model:&quot;, model);
+        if(!presenter.wasInitiated) presenter.init(view, model);
+    }
+
+    presenter.createPreview = function(view, model){
+        if(!presenter.wasInitiated) presenter.init(view, model);
+    }
+
+    presenter.init = function(view, model){
+        //console.log(&quot;MV init&quot;);
+        presenter.model = model;
+
+        //https://github.com/bensonruan/webcam-easy
+        class Webcam{constructor(e,t=&quot;user&quot;,s=null,i=null){this._webcamElement=e,this._webcamElement.width=this._webcamElement.width||1200,this._webcamElement.height=this._webcamElement.height||.75*this._webcamElement.width,this._facingMode=t,this._webcamList=[],this._streamList=[],this._selectedDeviceId=&quot;&quot;,this._canvasElement=s,this._snapSoundElement=i}get facingMode(){return this._facingMode}set facingMode(e){this._facingMode=e}get webcamList(){return this._webcamList}get webcamCount(){return this._webcamList.length}get selectedDeviceId(){return this._selectedDeviceId}getVideoInputs(e){return this._webcamList=[],e.forEach(e=&gt;{&quot;videoinput&quot;===e.kind&amp;&amp;this._webcamList.push(e)}),1==this._webcamList.length&amp;&amp;(this._facingMode=&quot;user&quot;),this._webcamList}getMediaConstraints(){var e={};return&quot;&quot;==this._selectedDeviceId?e.facingMode=this._facingMode:e.deviceId={exact:this._selectedDeviceId},{video:e,audio:!1}}selectCamera(){for(let e of this._webcamList)if(&quot;user&quot;==this._facingMode&amp;&amp;e.label.toLowerCase().includes(&quot;front&quot;)||&quot;enviroment&quot;==this._facingMode&amp;&amp;e.label.toLowerCase().includes(&quot;back&quot;)){this._selectedDeviceId=e.deviceId;break}}flip(){this._facingMode=&quot;user&quot;==this._facingMode?&quot;enviroment&quot;:&quot;user&quot;,this._webcamElement.style.transform=&quot;&quot;,this.selectCamera()}async start(e=!0){return new Promise((t,s)=&gt;{this.stop(),navigator.mediaDevices.getUserMedia(this.getMediaConstraints()).then(i=&gt;{this._streamList.push(i),this.info().then(i=&gt;{this.selectCamera(),e?this.stream().then(e=&gt;{t(this._facingMode)}).catch(e=&gt;{s(e)}):t(this._selectedDeviceId)}).catch(e=&gt;{s(e)})}).catch(e=&gt;{s(e)})})}async info(){return new Promise((e,t)=&gt;{navigator.mediaDevices.enumerateDevices().then(t=&gt;{this.getVideoInputs(t),e(this._webcamList)}).catch(e=&gt;{t(e)})})}async stream(){return new Promise((e,t)=&gt;{navigator.mediaDevices.getUserMedia(this.getMediaConstraints()).then(t=&gt;{this._streamList.push(t),this._webcamElement.srcObject=t,&quot;user&quot;==this._facingMode&amp;&amp;(this._webcamElement.style.transform=&quot;scale(-1,1)&quot;),this._webcamElement.play(),e(this._facingMode)}).catch(e=&gt;{console.log(e),t(e)})})}stop(){this._streamList.forEach(e=&gt;{e.getTracks().forEach(e=&gt;{e.stop()})})}snap(){if(null!=this._canvasElement){null!=this._snapSoundElement&amp;&amp;this._snapSoundElement.play(),this._canvasElement.height=this._webcamElement.scrollHeight,this._canvasElement.width=this._webcamElement.scrollWidth;let e=this._canvasElement.getContext(&quot;2d&quot;);return&quot;user&quot;==this._facingMode&amp;&amp;(e.translate(this._canvasElement.width,0),e.scale(-1,1)),e.clearRect(0,0,this._canvasElement.width,this._canvasElement.height),e.drawImage(this._webcamElement,0,0,this._canvasElement.width,this._canvasElement.height),this._canvasElement.toDataURL(&quot;image/png&quot;)}throw&quot;canvas element is missing&quot;}}
+
+        presenter.webcamElement = $(view).find(&apos;.md-webcam&apos;).get(0);
+        presenter.webcam = new Webcam(presenter.webcamElement, &apos;user&apos;, &apos;&apos;, &apos;&apos;);
+
+        presenter.model.EnvironmentImage = (presenter.model.EnvironmentImage == &quot;&quot; ? &quot;neutral&quot; : presenter.model.EnvironmentImage);
+
+        //presenter.init(view, model);
+        presenter.modelViewer = $(view).find(&quot;model-viewer&quot;).get(0);
+        $(presenter.modelViewer).attr(&quot;src&quot;, presenter.model.Model);
+        $(presenter.modelViewer).attr(&quot;poster&quot;, presenter.model.Poster);
+        $(presenter.modelViewer).attr(&quot;skybox-image&quot;, presenter.model.SkyboxImage);
+        $(presenter.modelViewer).attr(&quot;environment-image&quot;, presenter.model.EnvironmentImage);
+        $(presenter.modelViewer).attr(&quot;shadow-intensity&quot;, presenter.model.ShadowIntensity);
+        $(presenter.modelViewer).attr(&quot;shadow-softness&quot;, presenter.model.ShadowSoftness);
+        $(presenter.modelViewer).attr(&quot;alt&quot;, presenter.model.AltText);
+        //auto-rotate
+        if(presenter.model.AutoRotate == &quot;True&quot;) $(presenter.modelViewer).attr(&quot;auto-rotate&quot;, true);
+
+        //handle annotations
+        $(presenter.modelViewer).append(model.Annotations);
+        presenter.model.LabelsEnabled == &quot;True&quot; ? presenter.showAnnotations() : presenter.hideAnnotations();
+
+        //handle buttons
+        presenter.arButton = $(view).find(&quot;.arButton&quot;).get(0);
+        presenter.labelsButton = $(view).find(&quot;.labelsButton&quot;).get(0);
+        presenter.copyButton = $(view).find(&quot;.copyButton&quot;).get(0);
+        presenter.copyMessage = $(view).find(&quot;.copyMessage&quot;).get(0);
+
+        $( presenter.arButton ).on( &quot;click&quot;, function() {
+            $(presenter.arButton).toggleClass(&quot;arButton-selected&quot;);
+            $(presenter.arButton).hasClass(&quot;arButton-selected&quot;) ? presenter.startAR() : presenter.stopAR();            
+        });
+
+        if( presenter.model.Annotations.trim().length === 0 ) $( presenter.labelsButton ).css(&quot;display&quot;,&quot;none&quot;);
+        presenter.model.LabelsEnabled == &quot;True&quot; ? $(presenter.labelsButton).addClass(&quot;labelsButton-selected&quot;) : $(presenter.labelsButton).removeClass(&quot;labelsButton-selected&quot;);
+        $( presenter.labelsButton ).on( &quot;click&quot;, function(e) {
+            $(presenter.labelsButton).toggleClass(&quot;labelsButton-selected&quot;);
+            $(presenter.labelsButton).hasClass(&quot;labelsButton-selected&quot;) ? presenter.showAnnotations() : presenter.hideAnnotations();            
+        });
+
+        //handle copyright
+        let copyText = &apos;&lt;div class=&quot;copyContainer&quot;&gt;&apos;+presenter.model.CopyInfo+&apos;&lt;/div&gt;&apos;;
+        //console.log(&quot;copyText&quot;,copyText)
+        $(presenter.copyMessage).append(copyText);
+        if( presenter.model.CopyInfo == &quot;&quot; ) $( presenter.copyButton ).css(&quot;display&quot;,&quot;none&quot;);
+
+        //fix hyperlink clicking
+        presenter.copyContainer = $(presenter.copyMessage).find(&quot;.copyContainer&quot;).get(0);
+        let link = presenter.copyContainer.querySelector(&apos;a&apos;);
+        if (link) {
+            link.addEventListener(&apos;click&apos;, function(event) {
+                event.preventDefault();
+                window.open(link.getAttribute(&apos;href&apos;), &apos;_blank&apos;);
+            });
+        }
+
+        $( presenter.copyButton ).on( &quot;click&quot;, function(e) {
+            $(presenter.copyButton).toggleClass(&quot;copyButton-selected&quot;);
+            $(presenter.copyMessage).toggleClass(&quot;copyMessage-visible&quot;);
+        });
+        /* 03.02.2023 COPY INFO MOVED TO LAST PAGE - REMOVING BUTTON FROM PAGES
+            30.04.2023 JEDNAK WYŚWIETLAMY
+         */
+        //$( presenter.copyButton ).css(&quot;display&quot;,&quot;none&quot;);
+
+        //set scale on model load
+        $(presenter.modelViewer).on(&apos;load&apos;, function(){
+            if(presenter.model.Scale !== undefined &amp;&amp; presenter.model.Scale != &quot;&quot;) presenter.setScale(presenter.model.Scale);
+        });
+
+        presenter.wasInitiated = true;
+    }
+
+    presenter.setScale = function(scale){
+        presenter.modelViewer.scale = scale+&quot; &quot;+scale+&quot; &quot;+scale;
+    }
+
+    presenter.capture = function(video, scaleFactor) {
+        if(scaleFactor == null){
+            scaleFactor = 1;
+        }
+        var w = video.videoWidth * scaleFactor;
+        var h = video.videoHeight * scaleFactor;
+        var canvas = document.createElement(&apos;canvas&apos;);
+        canvas.width  = w;
+        canvas.height = h;
+        var ctx = canvas.getContext(&apos;2d&apos;);
+        ctx.drawImage(video, 0, 0, w, h);
+
+
+        return canvas;
+    }
+
+    presenter.startAR = function(){
+        presenter.isAREnabled = true;
+        $(presenter.webcamElement).css(&quot;display&quot;,&quot;block&quot;);
+        $(presenter.modelViewer).attr(&quot;shadow-intensity&quot;, 0);
+        $(presenter.modelViewer).attr(&quot;skybox-image&quot;, &quot;&quot;);
+
+        presenter.webcam.start()
+        .then(result =&gt;{
+            //console.log(&quot;webcam started&quot;);
+
+            var img;
+            presenter.ARInterval = setInterval(function(){
+                img = presenter.capture(presenter.webcamElement).toDataURL(&apos;image/jpeg&apos;)
+                $(presenter.modelViewer).attr(&quot;environment-image&quot;, img);
+            },80)
+        })
+        .catch(err =&gt; {
+            console.log(err);
+        });
+    }
+
+    presenter.stopAR = function(){
+        //console.log(&quot;Ar stopped&quot;)
+        clearInterval(presenter.ARInterval);
+        presenter.isAREnabled = false;
+
+        presenter.webcam.stop();
+        $(presenter.webcamElement).css(&quot;display&quot;,&quot;none&quot;);
+        $(presenter.modelViewer).attr(&quot;shadow-intensity&quot;, presenter.model.ShadowIntensity);
+        $(presenter.modelViewer).attr(&quot;skybox-image&quot;, presenter.model.SkyboxImage);
+        setTimeout(function(){
+            $(presenter.modelViewer).attr(&quot;environment-image&quot;, presenter.model.EnvironmentImage);
+        },81);
+    }
+
+    presenter.showAnnotations = function(){
+        presenter.setAnnotationsVisibility(&quot;visible&quot;);
+        $(presenter.labelsButton).addClass(&quot;labelsButton-selected&quot;);
+    }
+    presenter.hideAnnotations = function(){
+        presenter.setAnnotationsVisibility(&quot;hidden&quot;);
+        $(presenter.labelsButton).removeClass(&quot;labelsButton-selected&quot;);
+    }
+    presenter.setAnnotationsVisibility = function(value) {
+        $(presenter.modelViewer).find(&quot;.Hotspot&quot;).css(&quot;visibility&quot;, value);
+        presenter.AnnotationsVisibility = value;
+    }
+
+    presenter.getAnnotationsVisibility = function(){
+        //console.log(&quot;modelviewerodn presenter.AnnotationsVisibility: &quot;, presenter.AnnotationsVisibility);
+        return presenter.AnnotationsVisibility;
+    }
+
+    presenter.executeCommand = function(name, params) {
+        var commands = {
+            &apos;startAR&apos;: presenter.startAR,
+            &apos;stopAR&apos;: presenter.stopAR,
+            &apos;showAnnotations&apos;: presenter.showAnnotations,
+            &apos;hideAnnotations&apos;: presenter.hideAnnotations,
+            &apos;getAnnotationsVisibility&apos;: presenter.getAnnotationsVisibility,
+            &apos;setScale&apos;: presenter.setScale
+        };
+        Commands.dispatch(commands, name, params, presenter);
+    }; 
+
+    presenter.setShowErrorsMode = function(){
+        //element.innerHTML = &apos;setShowErrorsMode&apos;;
+    }
+    
+    presenter.setWorkMode = function(){
+        //element.innerHTML = &apos;setWorkMode&apos;;
+    }
+    
+    presenter.reset = function(){
+        //element.innerHTML = &apos;Reset&apos;;
+    }
+    
+    presenter.getErrorCount = function(){
+        //return 7;
+    }
+    
+    presenter.getMaxScore = function(){
+        //return 3;
+    }
+    
+    presenter.getScore = function(){
+        //return 1;
+    }
+    
+    presenter.getState = function(){
+        clearInterval(presenter.ARInterval);
+
+        return JSON.stringify({
+            AnnotationsVisibility: presenter.AnnotationsVisibility,
+            isAREnabled: presenter.isAREnabled
+        });
+    };
+
+    presenter.setState = function(stateString){
+        if (ModelValidationUtils.isStringEmpty(stateString)) return;
+        var state = JSON.parse(stateString);
+        presenter.AnnotationsVisibility = state.AnnotationsVisibility;
+        presenter.isAREnabled = state.isAREnabled;
+
+        //console.log(&quot;presenter.AnnotationsVisibility&quot;,presenter.AnnotationsVisibility)
+        //console.log(&quot;presenter.isAREnabled&quot;,presenter.isAREnabled)
+
+        presenter.AnnotationsVisibility == &quot;visible&quot; ? presenter.showAnnotations() : presenter.hideAnnotations();
+
+        if(presenter.isAREnabled){
+            $(presenter.arButton).addClass(&quot;arButton-selected&quot;);
+            presenter.startAR();
+        }else{
+            $(presenter.arButton).removeClass(&quot;arButton-selected&quot;);
+            presenter.stopAR();
+        }
+    };
+
+    return presenter;
+}</presenter></addon>

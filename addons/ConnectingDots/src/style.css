@@ -1,0 +1,65 @@
+.connectingdots {
+    border:3px solid #ccc;
+    position:relative;
+    -ms-touch-action: none;
+    touch-action: none;
+}
+
+.connectingdots .dot_container {
+    position:absolute;
+    min-height: 25px;
+    min-width: 25px;
+}
+
+.connectingdots .dot {
+    position:relative;
+    height:10px;
+    width:10px;
+    background-color:#000;
+    border-radius:5px;
+    float:left;
+    margin:-5px -5px -5px -5px;
+}
+
+.connectingdots .image-start {
+    position:absolute;
+    width: 100%;
+    height: 100%;
+}
+.connectingdots .image-end {
+    position:absolute;
+    width: 100%;
+    height: 100%;
+}
+.connectingdots .dot_number {
+    position:relative;
+    float:left;
+    cursor: default;
+}
+
+.connectingdots .line {
+    height:1px;
+    position:absolute;
+    background-color:#000;
+}
+.connectingdots .line-show-answer {
+    height:1px;
+    position:absolute;
+    background-color:gray;
+}
+
+.connectingdots .active .dot {
+    background-color:#146CDD;
+}
+
+.connectingdots .active .dot_number {
+    color:#146CDD;
+}
+
+.connectingdots .correct {
+    border:3px solid #04B431;
+}
+
+.connectingdots .wrong {
+    border:3px solid #DF0101;
+}

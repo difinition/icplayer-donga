@@ -1,0 +1,1374 @@
+<?xml version='1.0' encoding='UTF-8' ?><addon id='Sum_Of_Angles_KR'><metadata></metadata><model><property name='Polygon Points' displayName='Polygon points (min 3 (default) max 10)' type='list'><property name='Vertice Title' displayName='Vertice title' type='string' isLocalized='false' isDefault='false'/><property name='Point X' displayName='X coordinate' type='string' isLocalized='false' isDefault='false'/><property name='Point Y' displayName='Y coordinate' type='string' isLocalized='false' isDefault='false'/><property name='Point Color' displayName='Point color (hex)' type='string' isLocalized='false' isDefault='false'/><property name='Arc Color' displayName='Arc color (hex)' type='string' isLocalized='false' isDefault='false'/></property><property name='Polygon Radius' displayName='Polygon radius (default 50)' type='string' isLocalized='false' isDefault='false'/><property name='Circle Radius' displayName='Circle radius (default 98)' type='string' isLocalized='false' isDefault='false'/><property name='Hide Sum' displayName='Hide sum of angles' type='boolean' isLocalized='false' isDefault='false'/><property name='Show Lengths' displayName='Show edge lengths' type='boolean' isLocalized='false' isDefault='false'/><property name='Show Title' displayName='Show vertice titles' type='boolean' isLocalized='false' isDefault='false'/><property name='Show Angle Values' displayName='Show vertice angle values' type='boolean' isLocalized='false' isDefault='false'/><property name='Show Angle Types' displayName='Show angle types' type='boolean' isLocalized='false' isDefault='false'/><property name='Show Polygon Type' displayName='Show polygon type' type='boolean' isLocalized='false' isDefault='false'/><property name='Angle Types' displayName='Angle types' type='list'><property name='Acute Angle' displayName='Acute angle' type='string' isLocalized='false' isDefault='false'/><property name='Right Angle' displayName='Right angle' type='string' isLocalized='false' isDefault='false'/><property name='Obtuse Angle' displayName='Obtuse angle' type='string' isLocalized='false' isDefault='false'/></property><property name='Polygon Type' displayName='Triangle type' type='list'><property name='Acute Polygon' displayName='Acute polygon' type='string' isLocalized='false' isDefault='false'/><property name='Right Polygon' displayName='Right polygon' type='string' isLocalized='false' isDefault='false'/><property name='Obtuse Polygon' displayName='Obtuse polygon' type='string' isLocalized='false' isDefault='false'/><property name='Equilateral Polygon' displayName='Equilateral polygon' type='string' isLocalized='false' isDefault='false'/></property><property name='Vertice Angle Text' displayName='Move angle values outside polygon' type='boolean' isLocalized='false' isDefault='false'/><property name='Show Grid' displayName='Show grid' type='boolean' isLocalized='false' isDefault='false'/></model><resources></resources><css>.polygon_wrapper {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    background-color: #F4F4F4;
+}
+
+.polygon_wrapper.wrapper_grid {
+    --grid-size: 27px;
+    --grid-strength: 1px;
+    --grid-dash: 9px;
+    --grid-gap: 5px;
+    --grid-color: #cdcdcd;
+    --paper-color: #ffffff;
+    background-color: var(--paper-color) !important;
+    background-size: var(--grid-dash) var(--grid-dash), var(--grid-size) var(--grid-size);
+    background-image: linear-gradient(to bottom, transparent var(--grid-gap), var(--paper-color) var(--grid-gap)), 
+        linear-gradient(to right, var(--grid-color) var(--grid-strength), transparent var(--grid-strength)),
+        linear-gradient(to right, transparent var(--grid-gap), var(--paper-color) var(--grid-gap)),
+        linear-gradient(to bottom, var(--grid-color) var(--grid-strength), transparent var(--grid-strength));
+}
+
+.handle {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: 50%;
+    /* box-shadow: 0 0 0 1px #000; */
+    transition: box-shadow 0.3s;
+    cursor: pointer;
+}
+.inner_handle {
+    width: 9px;
+    height: 9px;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px #000;
+    transition: box-shadow 0.3s;
+    pointer-events: none;
+}
+.handle0 .inner_handle {
+    box-shadow: 0 0 0 1px #D1006E;
+    background-color: #D1006E;
+}
+.handle0:hover .inner_handle {
+    box-shadow: 0 0 0 2px #D1006E;
+}
+.handle1 .inner_handle {
+    box-shadow: 0 0 0 1px #1D781D;
+    background-color: #1D781D;
+}
+.handle1:hover .inner_handle {
+    box-shadow: 0 0 0 2px #1D781D;
+}
+.handle2 .inner_handle {
+    box-shadow: 0 0 0 1px #3455DB;
+    background-color: #3455DB;
+}
+.handle2:hover .inner_handle {
+    box-shadow: 0 0 0 2px #3455DB;
+}
+.handle3 .inner_handle {
+    box-shadow: 0 0 0 1px #8A2BE2;
+    background-color: #8A2BE2;
+}
+.handle3:hover .inner_handle {
+    box-shadow: 0 0 0 2px #8A2BE2;
+}
+
+.svg_polygon {
+    position: absolute;
+}
+
+.svg_polygon polygon {
+    stroke: #000;
+    stroke-width: 2;
+    fill: rgb(0 0 0 / 3%);
+}
+
+.svg_angle_type,
+.svg_polygon_type,
+.svg_len,
+.svg_title,
+.svg_txt {
+    position: absolute;
+    padding-inline: 7px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: #000;
+    border-radius: 6px;
+    background-color: rgb(255 255 255 / 70%);
+    pointer-events: none;
+    touch-action: none;
+}
+.svg_txt {
+    box-shadow: none;
+}
+.svg_title {
+    font-size: 26px;
+    border-radius: 999em;
+    padding-inline: unset;
+    background-color: #f4f4f4;
+}
+.svg_title.hidden {
+    display: none;
+}
+.svg_len {
+    box-shadow: none;
+}
+.svg_title0,
+.svg_txt0 {
+    color: #D1006E;
+}
+.svg_title1,
+.svg_txt1 {
+    color: #1D781D;
+}
+.svg_title2,
+.svg_txt2 {
+    color: #3455DB;
+}
+.svg_title3,
+.svg_txt3 {
+    color: #8A2BE2;
+}
+
+.svg_circle_angle,
+.svg_angle {
+    stroke-width: 1;
+}
+.svg_circle_angle0,
+.svg_angle0 {
+    stroke: #D1006E;
+    fill: #FFF4FB;
+}
+.svg_circle_angle1,
+.svg_angle1 {
+    stroke: #1D781D;
+    fill: #ECF9D6;
+}
+.svg_circle_angle2,
+.svg_angle2 {
+    stroke: #3455DB;
+    fill: #C1E1FF;
+}
+.svg_circle_angle3,
+.svg_angle3 {
+    stroke: #8A2BE2;
+    fill: #EFE9FF;
+}
+
+.result_txt {
+    position: absolute;
+    left: 550px;
+    top: 105px;
+    width: 230px;
+    height: auto;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    border: 1px solid rgb(0 0 0 / 30%);
+    border-radius: 6px;
+    color: #000;
+    background-color: rgb(255 255 255 / 70%);
+    pointer-events: none;
+    touch-action: none;
+}
+.result_txt.hidden {
+    display: none;
+}
+.result_txt.points_4 {
+    top: 180px;
+    left: 505px;
+    width: 290px;
+}
+.result_txt.points_5,
+.result_txt.points_6,
+.result_txt.points_7,
+.result_txt.points_8,
+.result_txt.points_9 {
+    top: 20px;
+}
+.result_A {
+    color: #D1006E;
+}
+.result_B {
+    color: #1D781D;
+}
+.result_C {
+    color: #3455DB;
+}
+.result_D {
+    color: #8A2BE2;
+}
+
+.svg_inner_circle {
+    position: absolute;
+    left: 595px;
+    top: 20px;
+    pointer-events: none;
+    touch-action: none;
+}
+.svg_inner_circle.hidden {
+    display: none;
+}
+.svg_inner_circle.points_4 {
+    top: -10px;
+    left: 545px;
+    height: 200px;
+}
+.svg_inner_circle.points_5,
+.svg_inner_circle.points_6,
+.svg_inner_circle.points_7,
+.svg_inner_circle.points_8,
+.svg_inner_circle.points_9 {
+    display: none;
+}
+.line_h {
+    stroke: transparent;
+    stroke-width: 2;
+}
+.circle_h {
+    stroke: transparent;
+    stroke-width: 2;
+    fill: none;
+}
+
+.svg_angle_type,
+.svg_polygon_type {
+    top: 10px;
+    left: 10px;
+    min-height: 10px;
+    background-color: #f4f4f4;
+}
+.svg_angle_type {
+    font-weight: normal;
+}
+.svg_polygon_type {
+    font-size: 22px;
+}
+
+.polygon_draggable {
+    position: absolute;
+    cursor: move;
+}</css><view>&lt;div id=&quot;polygon_wrapper&quot; class=&quot;polygon_wrapper&quot;&gt;
+    &lt;svg width=&quot;200&quot; height=&quot;100&quot; viewBox=&quot;0 0 200 100&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; class=&quot;svg_inner_circle&quot;&gt;
+        &lt;line class=&quot;line_h&quot; x1=&quot;1&quot; y1=&quot;99&quot; x2=&quot;199&quot; y2=&quot;99&quot; /&gt;
+        &lt;circle class=&quot;circle_h&quot; cx=&quot;100&quot; cy=&quot;99&quot; r=&quot;98&quot; /&gt;
+        &lt;path class=&quot;svg_angle0&quot; d=&quot;M 100 98 L 49 16 A 99 99 0 0 0 3 98 Z&quot; /&gt;
+        &lt;path class=&quot;svg_angle1&quot; d=&quot;M 100 98 L 151 16 A 99 99 0 0 0 49 16 Z&quot; /&gt;
+        &lt;path class=&quot;svg_angle2&quot; d=&quot;M 100 98 L 197 98 A 99 99 0 0 0 151 16 Z&quot; /&gt;
+    &lt;/svg&gt;
+    &lt;svg width=&quot;500&quot; height=&quot;500&quot; viewBox=&quot;0 0 500 500&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; class=&quot;svg_polygon&quot;&gt;
+        &lt;polygon class=&quot;polygon&quot; points=&quot;265,235 360,400 170,400&quot; /&gt;
+    &lt;/svg&gt;
+&lt;/div&gt;
+&lt;div id=&quot;polygon_draggable&quot; class=&quot;polygon_draggable&quot;&gt;&lt;/div&gt;</view><preview>&lt;div id=&quot;polygon_wrapper&quot; class=&quot;polygon_wrapper&quot;&gt;
+    &lt;svg width=&quot;200&quot; height=&quot;100&quot; viewBox=&quot;0 0 200 100&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; class=&quot;svg_inner_circle&quot;&gt;
+        &lt;line class=&quot;line_h&quot; x1=&quot;1&quot; y1=&quot;99&quot; x2=&quot;199&quot; y2=&quot;99&quot; /&gt;
+        &lt;circle class=&quot;circle_h&quot; cx=&quot;100&quot; cy=&quot;99&quot; r=&quot;98&quot; /&gt;
+        &lt;path class=&quot;svg_angle0&quot; d=&quot;M 100 98 L 49 16 A 99 99 0 0 0 3 98 Z&quot; /&gt;
+        &lt;path class=&quot;svg_angle1&quot; d=&quot;M 100 98 L 151 16 A 99 99 0 0 0 49 16 Z&quot; /&gt;
+        &lt;path class=&quot;svg_angle2&quot; d=&quot;M 100 98 L 197 98 A 99 99 0 0 0 151 16 Z&quot; /&gt;
+    &lt;/svg&gt;
+    &lt;svg width=&quot;500&quot; height=&quot;500&quot; viewBox=&quot;0 0 500 500&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; class=&quot;svg_polygon&quot;&gt;
+        &lt;polygon class=&quot;polygon&quot; points=&quot;265,235 360,400 170,400&quot; /&gt;
+    &lt;/svg&gt;
+&lt;/div&gt;
+&lt;div id=&quot;polygon_draggable&quot; class=&quot;polygon_draggable&quot;&gt;&lt;/div&gt;</preview><presenter>function AddonSum_Of_Angles_KR_create() {
+
+    let presenter = function () { };
+
+    let LETTERS = [&apos;A&apos;, &apos;B&apos;, &apos;C&apos;, &apos;D&apos;, &apos;E&apos;, &apos;F&apos;, &apos;G&apos;, &apos;H&apos;, &apos;I&apos;, &apos;J&apos;];
+    let TRIANGLE_TYPE = [&apos;Acute triangle&apos;, &apos;Right triangle&apos;, &apos;Obtuse triangle&apos;, &apos;Equilateral triangle&apos;];
+    let ANGLE_TYPE = [&apos;Acute angle&apos;, &apos;Right angle&apos;, &apos;Obtuse angle&apos;];
+    let POINTS = {};
+    let coords = {};
+    let currentLayout;
+    let previousLayout;
+    let polygonRadius = 50;
+    let circleRadius = 98;
+    let polygonPointsNumber = 3;
+    let currentPoint;
+    let angleSaved = [];
+    let timeoutID;
+
+    presenter.setPlayerController = function (controller) {
+        presenter.playerController = controller;
+    };
+
+    presenter.setCurrentLayoutName = function (layoutName) {
+        // before &quot;presenter.run&quot; in both &quot;present&quot; mode and editor
+        currentLayout = layoutName;
+    };
+
+    presenter.createPreview = function (view, model) {
+        presenter.init(view, model, true);
+    };
+
+    presenter.run = function (view, model) {
+        presenter.init(view, model, false);
+    };
+
+    presenter.init = function (view, model, isPreview) {
+        console.log(&apos;Sum_Of_Angles v4.1&apos;);
+
+        presenter.view = view;
+        presenter.$view = $(view);
+        presenter.model = model;
+
+        previousLayout = currentLayout;
+
+        presenter.isVisibleByDefault = ModelValidationUtils.validateBoolean(model[&apos;Is Visible&apos;]);
+        presenter.isVisible = presenter.isVisibleByDefault;
+
+        let radius = model[&apos;Polygon Radius&apos;];
+        if (radius) polygonRadius = parseInt(radius);
+        radius = model[&apos;Circle Radius&apos;];
+        if (radius) circleRadius = parseInt(radius);
+
+        presenter.svg = presenter.view.querySelector(&apos;.svg_polygon&apos;);
+        presenter.polygon = presenter.view.querySelector(&apos;.svg_polygon polygon&apos;);
+        presenter.svg_inner_circle = presenter.view.querySelector(&apos;.svg_inner_circle&apos;);
+
+        presenter.hideSum = ModelValidationUtils.validateBoolean(model[&apos;Hide Sum&apos;]);
+        presenter.hideTitle = ModelValidationUtils.validateBoolean(model[&apos;Show Title&apos;]);
+        presenter.showLengths = ModelValidationUtils.validateBoolean(model[&apos;Show Lengths&apos;]);
+        presenter.isGrigVisible = ModelValidationUtils.validateBoolean(model[&apos;Show Grid&apos;]);
+        presenter.isAngleTypesVisible = ModelValidationUtils.validateBoolean(model[&apos;Show Angle Types&apos;]);
+        presenter.isAngleValuesVisible = ModelValidationUtils.validateBoolean(model[&apos;Show Angle Values&apos;]);
+        presenter.isPolygonTypeVisible = ModelValidationUtils.validateBoolean(model[&apos;Show Polygon Type&apos;]);
+        presenter.isAngleTextOutside = ModelValidationUtils.validateBoolean(model[&apos;Vertice Angle Text&apos;]);
+
+        if (model[&apos;Angle Types&apos;]) {
+            if (model[&apos;Angle Types&apos;][0][&apos;Acute Angle&apos;]) ANGLE_TYPE[0] = model[&apos;Angle Types&apos;][0][&apos;Acute Angle&apos;];
+            if (model[&apos;Angle Types&apos;][0][&apos;Right Angle&apos;]) ANGLE_TYPE[1] = model[&apos;Angle Types&apos;][0][&apos;Right Angle&apos;];
+            if (model[&apos;Angle Types&apos;][0][&apos;Obtuse Angle&apos;]) ANGLE_TYPE[2] = model[&apos;Angle Types&apos;][0][&apos;Obtuse Angle&apos;];
+        }
+
+        if (model[&apos;Polygon Type&apos;]){
+            if (model[&apos;Polygon Type&apos;][0][&apos;Acute Polygon&apos;]) TRIANGLE_TYPE[0] = model[&apos;Polygon Type&apos;][0][&apos;Acute Polygon&apos;];
+            if (model[&apos;Polygon Type&apos;][0][&apos;Right Polygon&apos;]) TRIANGLE_TYPE[1] = model[&apos;Polygon Type&apos;][0][&apos;Right Polygon&apos;];
+            if (model[&apos;Polygon Type&apos;][0][&apos;Obtuse Polygon&apos;]) TRIANGLE_TYPE[2] = model[&apos;Polygon Type&apos;][0][&apos;Obtuse Polygon&apos;];
+            if (model[&apos;Polygon Type&apos;][0][&apos;Equilateral Polygon&apos;]) TRIANGLE_TYPE[3] = model[&apos;Polygon Type&apos;][0][&apos;Equilateral Polygon&apos;];
+        }
+
+        if (presenter.isGrigVisible) presenter.$view.find(&apos;.polygon_wrapper&apos;).addClass(&apos;wrapper_grid&apos;);
+
+        polygonPointsNumber = collectModelData(model);
+
+        presenter.drawPolygon();
+        presenter.drawCircles();
+        presenter.addElements();
+        presenter.updateCoordinates();
+        presenter.drawAngles();
+
+        if (!isPreview) {
+            timeoutID = setTimeout(() =&gt; {
+                presenter.draggablePolygon();
+                presenter.updateCoordinates();
+                presenter.drawAngles();
+                presenter.updatePolygon();
+            }, 700);
+        }
+
+        presenter.setVisibility(presenter.isVisibleByDefault || isPreview);
+    };
+
+    function collectModelData(model) {
+        if (!model[&apos;Polygon Points&apos;] || model[&apos;Polygon Points&apos;].length &lt; 3) {   // default mode as triangle
+            POINTS = {
+                A: { x: 265, y: 235.45517328095668, title: LETTERS[0] },
+                B: { x: 360, y: 400, title: LETTERS[1] },
+                C: { x: 170, y: 400, title: LETTERS[2] }
+            };
+            coords = {
+                A: { x: 265, y: 235.45517328095668, title: LETTERS[0] },
+                B: { x: 360, y: 400, title: LETTERS[1] },
+                C: { x: 170, y: 400, title: LETTERS[2] }
+            };
+            return 3;
+        }
+
+        model[&apos;Polygon Points&apos;].forEach((point, idx) =&gt; {
+            let x = point[&apos;Point X&apos;];
+            let y = point[&apos;Point Y&apos;];
+            let title = point[&apos;Vertice Title&apos;];
+            let arcColor = point[&apos;Arc Color&apos;];
+            let pointColor = point[&apos;Point Color&apos;];
+            let val = {
+                x: x ? parseFloat(x) : 0,
+                y: y ? parseFloat(y) : 0,
+                title: title ? title : LETTERS[idx],
+                arcColor: arcColor ? arcColor : &apos;silver&apos;,
+                pointColor: pointColor ? pointColor : &apos;grey&apos;
+            };
+            POINTS[LETTERS[idx]] = val;
+            coords[LETTERS[idx]] = val;
+        });
+
+        let len = Object.keys(coords).length;
+
+        return len;
+    }
+
+    presenter.drawPolygon = function () {
+        let width = parseInt(presenter.view.style.width);
+        let height = parseInt(presenter.view.style.height);
+
+        presenter.svg.setAttribute(&apos;width&apos;, `${width}`);
+        presenter.svg.setAttribute(&apos;height&apos;, `${height}`);
+        presenter.svg.setAttribute(&apos;viewBox&apos;, `0 0 ${width} ${height}`);
+
+        let polygonCommand = &apos;&apos;;
+        Object.values(coords).forEach(coord =&gt; polygonCommand += `${coord.x},${coord.y} `);
+        presenter.polygon.setAttribute(&apos;points&apos;, polygonCommand);
+    };
+
+    presenter.updatePolygon = function () {
+        let minMax = getMinMax();
+        let minX = minMax.minX;
+        let minY = minMax.minY;
+
+        let rect = presenter.polygon.getBoundingClientRect();
+        let scaleInfo = presenter.playerController.getScaleInformation();
+
+        let clipPathCommand = &apos;path(&quot;M &apos;;
+        Object.values(coords).forEach((coord, idx) =&gt; {
+            if (!idx) {
+                clipPathCommand += `${(coord.x - minX)} ${(coord.y - minY)} `;
+            } else {
+                clipPathCommand += `L ${(coord.x - minX)} ${(coord.y - minY)} `;
+            }
+        });
+        clipPathCommand += &apos;Z&quot;)&apos;;
+
+        $(&apos;#polygon_draggable&apos;).css({
+            &apos;left&apos;: (minX) + &apos;px&apos;,
+            &apos;top&apos;: (minY) + &apos;px&apos;,
+            &apos;width&apos;: rect.width / scaleInfo.scaleX + &apos;px&apos;,
+            &apos;height&apos;: rect.height / scaleInfo.scaleY + &apos;px&apos;,
+            &apos;clip-path&apos;: clipPathCommand
+        });
+    };
+
+    presenter.drawCircles = function () {
+        if (presenter.hideSum) $(presenter.svg_inner_circle).addClass(&apos;hidden&apos;);
+
+        $(presenter.svg_inner_circle).addClass(&apos;points_&apos; + polygonPointsNumber);
+        if (polygonPointsNumber == 4) {
+            presenter.svg_inner_circle.setAttribute(&apos;height&apos;, &apos;200&apos;);
+            presenter.svg_inner_circle.setAttribute(&apos;viewBox&apos;, &apos;0 0 200 200&apos;);
+            $(presenter.svg_inner_circle).find(&apos;path&apos;).remove();
+
+            for (let i = 0; i &lt; polygonPointsNumber; i++) {
+                const angle = document.createElementNS(&apos;http://www.w3.org/2000/svg&apos;, &apos;path&apos;);
+                angle.id = &apos;svg_circle_angle&apos; + i;
+                angle.setAttribute(&apos;class&apos;, &apos;svg_circle_angle&apos; + i + &apos; svg_circle_angle&apos;);
+                presenter.svg_inner_circle.appendChild(angle);
+            }
+        }
+    };
+
+    presenter.addElements = function () {
+        const result = document.createElement(&apos;div&apos;);
+
+        result.className = &apos;result_txt&apos;;
+        result.innerText = ` = ${(polygonPointsNumber - 2) * 180}°`;
+        $(result).addClass(&apos;points_&apos; + polygonPointsNumber);
+
+        for (let i = 0; i &lt; polygonPointsNumber; i++) {
+            const angle = document.createElementNS(&apos;http://www.w3.org/2000/svg&apos;, &apos;path&apos;);
+            angle.id = &apos;svg_angle&apos; + i;
+            angle.setAttribute(&apos;class&apos;, &apos;svg_angle&apos; + i + &apos; svg_angle&apos;);
+            angle.setAttribute(&apos;d&apos;, &apos;&apos;);
+            presenter.svg.prepend(angle);
+
+            const title = document.createElement(&apos;div&apos;);
+            title.id = &apos;svg_title&apos; + i;
+            title.className = &apos;svg_title&apos; + i + &apos; svg_title&apos;;
+            title.innerText = coords[LETTERS[i]].title;
+            presenter.view.appendChild(title);
+
+            const txt = document.createElement(&apos;div&apos;);
+            txt.id = &apos;svg_txt&apos; + i;
+            txt.className = &apos;svg_txt&apos; + i + &apos; svg_txt&apos;;
+            presenter.view.appendChild(txt);
+
+            if (presenter.showLengths) {
+                const len = document.createElement(&apos;div&apos;);
+                len.id = &apos;svg_len&apos; + i;
+                len.className = &apos;svg_len&apos; + i + &apos; svg_len&apos;;
+                presenter.view.appendChild(len);
+            }
+
+            const angleType = document.createElement(&apos;div&apos;);
+            angleType.id = &apos;svg_angle_type&apos; + i;
+            angleType.className = &apos;svg_angle_type&apos; + i + &apos; svg_angle_type&apos;;
+            presenter.view.appendChild(angleType);
+
+            const handle = document.createElement(&apos;div&apos;);
+            handle.id = &apos;handle&apos; + i;
+            handle.className = &apos;handle&apos; + i + &apos; handle&apos;;
+            const innerHandle = document.createElement(&apos;div&apos;);
+            innerHandle.className = &apos;inner_handle&apos;;
+            handle.appendChild(innerHandle);
+            presenter.view.appendChild(handle);
+
+            let span = document.createElement(&apos;span&apos;);
+            span.className = &apos;result_&apos; + LETTERS[polygonPointsNumber - i - 1];
+            let plus = document.createElement(&apos;span&apos;);
+            plus.className = &apos;plus&apos;;
+            plus.innerText = &apos; + &apos;;
+            result.prepend(span);
+            if (i &lt; polygonPointsNumber - 1) result.prepend(plus);
+        }
+
+        const polygonType = document.createElement(&apos;div&apos;);
+        polygonType.id = &apos;svg_polygon_type&apos;;
+        polygonType.className = &apos;svg_polygon_type&apos;;
+        presenter.view.appendChild(polygonType);
+
+        presenter.setAnglesTypeVisibility(presenter.isAngleTypesVisible);
+        presenter.setAngleValuesVisibility(presenter.isAngleValuesVisible);
+        presenter.setPolygonTypeVisibility(presenter.isPolygonTypeVisible);
+
+        if (presenter.hideSum) $(result).addClass(&apos;hidden&apos;);
+        if (!presenter.hideTitle) $(&apos;.svg_title&apos;).addClass(&apos;hidden&apos;);
+
+        presenter.view.appendChild(result);
+    };
+
+    function isIntersecting(x1, y1, x2, y2, x3, y3, x4, y4) {
+        const denom = ((y4 - y3) * (x2 - x1)) - ((x4 - x3) * (y2 - y1));
+        const numeA = ((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3));
+        const numeB = ((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3));
+
+        if (denom == 0) return false;
+
+        const uA = numeA / denom;
+        const uB = numeB / denom;
+
+        if (uA &gt;= 0 &amp;&amp; uA &lt;= 1 &amp;&amp; uB &gt;= 0 &amp;&amp; uB &lt;= 1) return { x: x1 + (uA * (x2 - x1)), y: y1 + (uA * (y2 - y1)) };
+
+        return false;
+    }
+
+    // let selfIntersectLines = [];
+    const findSelfIntersections = function (findAllLines) {
+        let points = [];
+        Object.values(coords).forEach((val, idx) =&gt; {
+            points.push([val.x, val.y]);
+        });
+        points.push([coords[LETTERS[0]].x, coords[LETTERS[0]].y]);
+
+        const equalPoint = function (point1, point2) {
+            return (point1[0] == point2[0] &amp;&amp; point1[1] == point2[1]);
+        };
+        let line1p1, line1p2, line2p1, line2p2, result;
+
+        let len = points.length;
+        for (let i = 0; i &lt; len; i++) {
+            line1p1 = points[i];
+            if ((i + 1) &lt; len) {
+                line1p2 = points[i + 1];
+            } else {
+                line1p2 = points[0];
+                if (equalPoint(line1p1, line1p2)) {
+                    continue;
+                }
+            }
+            for (let j = i + 1; j &lt; len; j++) {
+                line2p1 = points[j];
+                if ((j + 1) &lt; len) {
+                    line2p2 = points[j + 1];
+                } else {
+                    line2p2 = points[0];
+                    if (equalPoint(line2p1, line2p2)) {
+                        continue;
+                    }
+                }
+
+                result = isIntersecting(
+                    line1p1[0], line1p1[1], line1p2[0], line1p2[1],
+                    line2p1[0], line2p1[1], line2p2[0], line2p2[1]
+                );
+
+                if (result) {
+                    if (equalPoint(line1p2, line2p1) &amp;&amp; equalPoint(line1p2, [result.x, result.y]) || equalPoint(line1p1, line2p2)) {
+                        continue;
+                    }
+                    // selfIntersectLines.push([[line1p1, line1p2], [line2p1, line2p2]]);
+                    if (findAllLines != true) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    };
+
+    presenter.draggablePolygon = function () {
+        let cs = window.getComputedStyle(presenter.view.querySelector(&apos;.handle&apos;));
+        let width = parseInt(cs.width)
+        let height = parseInt(cs.height)
+        let addonWidth = parseInt(presenter.view.style.width);
+        let addonHeight = parseInt(presenter.view.style.height);
+        let rect = presenter.svg.getBoundingClientRect();
+        let isPolygonIntersecting = false;
+        let dragging = [];
+        let angleSum = (polygonPointsNumber - 2) * 180;
+        let scaleInfo = presenter.playerController.getScaleInformation();
+
+        // vertices dragging
+        for (let i = 0; i &lt; polygonPointsNumber; i++) {
+            dragging.push(false);
+            angleSaved.push(false);
+            let handle = presenter.view.querySelector(&apos;#handle&apos; + i);
+            $(handle).draggable({
+                start: function() {
+                    dragging[i] = true;
+                    let div = $(this);
+                    div.data(&apos;top&apos;, div.css(&apos;top&apos;));
+                    div.data(&apos;left&apos;, div.css(&apos;left&apos;));
+                },
+
+                containment: [
+                    rect.left + 4 * scaleInfo.scaleX,
+                    rect.top + 4 * scaleInfo.scaleY,
+                    rect.left + (addonWidth - width - 4) * scaleInfo.scaleX,
+                    rect.top + (addonHeight - height - 4) * scaleInfo.scaleY
+                ],
+                // grid: [2, 2],
+                iframeFix: true,
+
+                drag: function (e, ui) {
+                    ui.position.top /= scaleInfo.scaleY;
+                    ui.position.left /= scaleInfo.scaleX;
+
+                    if (polygonPointsNumber &gt; 3) {      // block the vertex of polygon from intersecting opposite sections in this polygon
+                        let div = $(this);
+                        function goHome () {            // go back to the last non-intersecting data
+                            div.css(&apos;pointer-events&apos;, &apos;none&apos;);
+                            dragging[i] = false;
+                            $(handle).draggable(&apos;disable&apos;);
+                            div.css(&apos;left&apos;, div.data(&apos;left&apos;));
+                            div.css(&apos;top&apos;, div.data(&apos;top&apos;));
+                            coords[LETTERS[i]].x = parseInt(div.data(&apos;left&apos;)) + width / 2;
+                            coords[LETTERS[i]].y = parseInt(div.data(&apos;top&apos;)) + height / 2;
+                            presenter.updateCoordinates();
+                            presenter.drawAngles(i);
+                            presenter.updatePolygon();
+                        };
+                        isPolygonIntersecting = findSelfIntersections(false);
+                        let sum = 0;
+                        for (let i = 0; i &lt; polygonPointsNumber; i++) {
+                            let angle = getAngle(i)[1];
+                            sum += angle;
+                            if (!angleSaved[i] &amp;&amp; angle &gt; 1 &amp;&amp; !isPolygonIntersecting) {
+                                div.data(&apos;top&apos;, div.css(&apos;top&apos;));
+                                div.data(&apos;left&apos;, div.css(&apos;left&apos;));
+                                angleSaved[i] = false;
+                            } else {
+                                angleSaved[i] = true;
+                            }
+                        }
+
+                        if (dragging[i] &amp;&amp; (isPolygonIntersecting || sum &gt; angleSum + 0.01)) {
+                            goHome(sum);
+                        } else if (dragging[i]) {
+                            coords[LETTERS[i]].x = ui.position.left + width / 2;
+                            coords[LETTERS[i]].y = ui.position.top + height / 2;
+                            presenter.updateCoordinates();
+                            presenter.drawAngles(i);
+                            presenter.updatePolygon();
+                        }
+                    } else {
+                        coords[LETTERS[i]].x = ui.position.left + width / 2;
+                        coords[LETTERS[i]].y = ui.position.top + height / 2;
+                        presenter.updateCoordinates();
+                        presenter.drawAngles(i);
+                        presenter.updatePolygon();
+                    }
+                },
+
+                stop: function(e, ui) {
+                    if (!dragging[i]) {
+                        let div = $(this);
+                        div.css(&apos;left&apos;, div.data(&apos;left&apos;));
+                        div.css(&apos;top&apos;, div.data(&apos;top&apos;));
+                        $(handle).draggable(&apos;enable&apos;);
+                        div.css(&apos;pointer-events&apos;, &apos;&apos;);
+                        dragging[i] = false;
+                    }
+                }
+            });
+        }
+
+        // polygon dragging
+        let polyDrag;
+        let startX, startY;
+        let polygonDraggable = document.getElementById(&apos;polygon_draggable&apos;);
+        $(polygonDraggable).draggable({
+            start: function(e, ui) {
+                polyDrag = true;
+                let div = $(this);
+                div.data(&apos;top&apos;, div.css(&apos;top&apos;));
+                div.data(&apos;left&apos;, div.css(&apos;left&apos;));
+                startX = e.clientX;
+                startY = e.clientY;
+            },
+
+            containment: [
+                rect.left + 4 * scaleInfo.scaleX,
+                rect.top + 4 * scaleInfo.scaleY,
+                rect.left + (addonWidth - width - 4) * scaleInfo.scaleX,
+                rect.top + (addonHeight - height - 4) * scaleInfo.scaleY
+            ],
+            iframeFix: true,
+
+            drag: function (e, ui) {
+                let ev = e.originalEvent.originalEvent;
+                if (polyDrag &amp;&amp; checkPoligonPosition(ev)) {
+                    ui.position.top /= scaleInfo.scaleY;
+                    ui.position.left /= scaleInfo.scaleX;
+
+                    for (let i = 0; i &lt; polygonPointsNumber; i++) {
+                        coords[LETTERS[i]].x += (e.clientX - startX) / scaleInfo.scaleX;
+                        coords[LETTERS[i]].y += (e.clientY - startY) / scaleInfo.scaleY;
+                    }
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    presenter.updateCoordinates();
+                    for (let i = 0; i &lt; polygonPointsNumber; i++) {
+                        presenter.drawAngles(i);
+                    }
+                    presenter.updatePolygon();
+                } else if (polyDrag) {
+                    polyDrag = false;
+                    let div = $(this);
+                    div.css(&apos;left&apos;, div.data(&apos;left&apos;));
+                    div.css(&apos;top&apos;, div.data(&apos;top&apos;));
+                    div.css(&apos;pointer-events&apos;, &apos;none&apos;);
+                    $(polygonDraggable).draggable(&apos;disable&apos;);
+                }
+            },
+
+            stop: function(e, ui) {
+                if (!polyDrag) {
+                    let div = $(this);
+                    div.css(&apos;pointer-events&apos;, &apos;&apos;);
+                    $(polygonDraggable).draggable(&apos;enable&apos;);
+                    polyDrag = true;
+                    presenter.updatePolygon();
+                }
+            }
+        });
+    }
+
+    function getMinMax () {
+        let X = [], Y = [];
+        Object.values(coords).forEach(val =&gt; {
+            X.push(val.x);
+            Y.push(val.y);
+        });
+
+        return {
+            minX: Math.min(...X),
+            maxX: Math.max(...X),
+            minY: Math.min(...Y),
+            maxY: Math.max(...Y)
+        };
+    }
+
+    function checkPoligonPosition(e) {
+        let coordVals = Object.values(coords);
+        let minMax = getMinMax();
+        let minX = minMax.minX;
+        let maxX = minMax.maxX;
+        let minY = minMax.minY;
+        let maxY = minMax.maxY;
+        let width = parseInt(presenter.view.style.width);
+        let height = parseInt(presenter.view.style.height);
+
+        let cs = window.getComputedStyle(presenter.view.querySelector(&apos;.handle&apos;), null);
+        let csW = parseFloat(cs.width) / 2 + 3;
+        let csH = parseFloat(cs.height) / 2 + 3;
+
+        minX = minX - csW;
+        maxX = width - csW - maxX;
+        minY = minY - csH;
+        maxY = height - csH - maxY;
+
+        if (minX &lt; 0 || maxX &lt; 0 || minY &lt; 0 || maxY &lt; 0) {
+            if (minX &lt; 0) for (let val of coordVals) val.x += 3 - e.movementX;
+            if (maxX &lt; 0) for (let val of coordVals) val.x -= 3 + e.movementX;
+            if (minY &lt; 0) for (let val of coordVals) val.y += 3 - e.movementY;
+            if (maxY &lt; 0) for (let val of coordVals) val.y -= 3 + e.movementY;
+
+            $(presenter.polygon).off(&apos;mousemove touchmove&apos;);
+
+            presenter.updateCoordinates();
+            presenter.drawAngles();
+            presenter.updatePolygon();
+
+            return false;
+        }
+
+        return true;
+    }
+
+    function drawArc(idx, c, r, p, angle) {
+        let startX = p.P2.x;
+        let startY = p.P2.y;
+        let stopX = p.P1.x;
+        let stopY = p.P1.y;
+        let centerX = c.x;
+        let centerY = c.y;
+        let arcCommand;
+        let arcElem = angle &gt; 180 ? &apos; 0 1 0 &apos; : &apos; 0 0 0 &apos;;
+
+        arcCommand = &apos;M &apos; + centerX + &apos; &apos; + centerY + &apos; L &apos; + startX + &apos; &apos; + startY +
+            &apos; A &apos; + r + &apos; &apos; + r + arcElem + stopX + &apos; &apos; + stopY + &apos; Z&apos;;
+
+        if (Math.round(angle) == 90) {
+            let middleY = startY + (centerX - startX);
+            let middleX = (startY - centerY) / (centerX - startX) * (middleY - startY) + startX;
+            if (centerX - startX == 0) middleX = stopX;
+
+            arcCommand = &apos;M &apos; + centerX + &apos; &apos; + centerY + &apos; L &apos; + startX + &apos; &apos; + startY +
+                &apos; L &apos; + middleX + &apos; &apos; + middleY + &apos; L &apos; + stopX + &apos; &apos; + stopY + &apos; Z&apos;;
+        }
+
+        const arc = presenter.svg.querySelector(&apos;#svg_angle&apos; + idx);
+        arc.setAttribute(&apos;d&apos;, arcCommand);
+    }
+
+    function getArcPoints(sign, r, A, B, C) {
+        let L1, L2, a1, a2, R1x, R1y, R2x, R2y, P, dBAx, dBAy, dCAx, dCAy;
+
+        dBAx = B.x - A.x;
+        dBAy = B.y - A.y;
+        L1 = Math.sqrt(dBAy ** 2 + dBAx ** 2);
+        R1y = dBAy / L1 * r + A.y;
+        a1 = dBAy == 0 ? 0 : dBAx / dBAy;
+        R1x = a1 * (R1y - A.y) + A.x;
+        if (dBAy == 0) {
+            if(A.x &gt; B.x) {
+                R1x = A.x - r;
+            } else {
+                R1x = A.x + r;
+            }
+        }
+
+        dCAx = C.x - A.x;
+        dCAy = C.y - A.y;
+        L2 = Math.sqrt(dCAy ** 2 + dCAx ** 2);
+        R2y = dCAy / L2 * r + A.y;
+        a2 = dCAy == 0 ? 0 : dCAx / dCAy;
+        R2x = a2 * (R2y - A.y) + A.x;
+        if (dCAy == 0) {
+            if (C.x &gt; A.x) {
+                R2x = A.x + r;
+            } else {
+                R2x = A.x - r;
+            }
+        }
+
+        P = { P1: { x: R1x, y: R1y }, P2: { x: R2x, y: R2y } };
+        if (sign &lt; 0 &amp;&amp; polygonPointsNumber == 3) P = { P1: { x: R2x, y: R2y }, P2: { x: R1x, y: R1y } };
+
+        return P;
+    }
+
+    function setElementPosition(realAngle, elem, angleTypeWidth, idx, xA, yA, xO, yO, rR, rr) {
+        const addonWidth = parseInt(presenter.view.style.width);
+        const addonHeight = parseInt(presenter.view.style.height);
+
+        let csEl = window.getComputedStyle(elem, null);
+        let elW = parseFloat(csEl.width);
+        let elH = parseFloat(csEl.height);
+
+        let xEl = (xO - xA) * rR / rr + xA;
+        let yEl = (yO - yA) * rR / rr + yA;
+
+        if (polygonPointsNumber &gt; 3 &amp;&amp; realAngle &gt; 180) {
+            xEl = (xA - xO) * rR / rr + xA;
+            yEl = (yA - yO) * rR / rr + yA;
+        }
+
+        let xElem = 2 * xA - xEl;
+        let yElem = 2 * yA - yEl;
+        xElem = 2 * xA - xEl;
+        yElem = 2 * yA - yEl;
+
+        let elemLeft = xElem - elW / 2;
+
+        let simulLeft = addonWidth - elW - angleTypeWidth - 15;
+
+        if (elemLeft &lt; 0) {
+            elemLeft = 0;
+            if (yElem &lt; addonHeight / 2) {
+                yElem = coords[LETTERS[idx]].y + 40;
+            } else {
+                yElem = coords[LETTERS[idx]].y - 40;
+            }
+        }
+        if (elemLeft &gt; simulLeft) {
+            elemLeft = simulLeft;
+            if (yElem &lt; addonHeight / 2) {
+                yElem = coords[LETTERS[idx]].y + 40;
+            } else {
+                yElem = coords[LETTERS[idx]].y - 40;
+            }
+        }
+
+        // elem.style.left = xEl - elW / 2 + &apos;px&apos;;
+        elem.style.left = elemLeft + &apos;px&apos;;
+        elem.style.top = yElem - elH / 2 + &apos;px&apos;;
+    }
+
+    function setVerticeAngleText(realAngle, angle, idx, xA, yA, xO, yO, rR, rr) {
+        const txt = presenter.view.querySelector(&apos;#svg_txt&apos; + idx);
+        txt.innerText = `${Math.round(angle)}°`;
+
+        if (presenter.isAngleTextOutside) {
+            setElementPosition(realAngle, txt, 0, idx, xA, yA, xO, yO, rR, rr);
+        } else {
+            let csTxt = window.getComputedStyle(txt, null);
+            let txtWidth = parseFloat(csTxt.width);
+            let txtHeight = parseFloat(csTxt.height);
+
+            let xTxt = (xO - xA) * rR / rr + xA;
+            let yTxt = (yO - yA) * rR / rr + yA;
+
+            txt.style.left = xTxt - txtWidth / 2 + &apos;px&apos;;
+            txt.style.top = yTxt - txtHeight / 2 + &apos;px&apos;;
+        }
+    }
+
+    function setVerticeTitleText(realAngle, angle, idx, xA, yA, xO, yO, rR, rr) {
+        const angleType = presenter.view.querySelector(&apos;.svg_angle_type&apos; + idx);
+        let csAngle = window.getComputedStyle(angleType, null);
+        let angleWidth = parseFloat(csAngle.width);
+        let angleHeight = parseFloat(csAngle.height);
+        if (!presenter.isAngleTypesVisible) angleWidth = 0;
+
+        const title = presenter.view.querySelector(&apos;#svg_title&apos; + idx);
+        setElementPosition(realAngle, title, angleWidth, idx, xA, yA, xO, yO, rR, rr);
+    }
+
+    function setEdgeLengths(idx, angle) {
+        if (!presenter.showLengths) return;
+
+        let letter = getRightLetters(idx);
+        angle = Math.round(angle);
+
+        let xA = coords[letter[0]].x;
+        let yA = coords[letter[0]].y;
+        let xB = coords[letter[1]].x;
+        let yB = coords[letter[1]].y;
+
+        let len = Math.sqrt((xB - xA)**2 + (yB - yA)**2) / 10;
+        // len = len.toFixed(1);
+        len = Math.round(len);
+
+        const edge = presenter.view.querySelector(&apos;#svg_len&apos; + idx);
+        edge.innerText = `약 ${len}`;
+
+        let csLen = window.getComputedStyle(edge, null);
+        let lenWidth = parseFloat(csLen.width);
+        let lenHeight = parseFloat(csLen.height);
+
+        edge.style.left = (xB + xA - lenWidth) / 2 + &apos;px&apos;
+        edge.style.top = (yB + yA - lenHeight) / 2 + &apos;px&apos;
+    }
+
+    function positionText(realAngle, angle, idx, arcPoints, letter) {
+        if (idx &gt;= polygonPointsNumber) return;
+
+        let xA = coords[LETTERS[idx]].x;
+        let yA = coords[LETTERS[idx]].y;
+        let xO = (arcPoints.P1.x + arcPoints.P2.x) / 2;
+        let yO = (arcPoints.P1.y + arcPoints.P2.y) / 2;
+        let rR = polygonRadius - 15;
+        let rr = Math.sqrt((xO - xA)**2 + (yO - yA)**2);
+
+        setVerticeAngleText(realAngle, angle, idx, xA, yA, xO, yO, rR, rr);
+
+        setVerticeTitleText(realAngle, angle, idx, xA, yA, xO, yO, rR, rr);
+
+        // sum of angles
+        presenter.view.querySelector(&apos;.result_&apos; + LETTERS[idx]).innerText = Math.round(angle) + &apos;°&apos;;
+    }
+
+    function getRightLetters(idx) {
+        let letters;
+        if (idx == 0) {
+            letters = [LETTERS[idx], LETTERS[idx + 1], LETTERS[polygonPointsNumber - 1]];
+        } else if (idx == polygonPointsNumber - 1) {
+            letters = [LETTERS[idx], LETTERS[0], LETTERS[polygonPointsNumber - 2]];
+        } else {
+            letters = [LETTERS[idx], LETTERS[idx + 1], LETTERS[idx - 1]];
+        }
+        return letters;
+    }
+
+    function getAngle(idx) {
+        let letter = getRightLetters(idx);
+        const angleSum = (polygonPointsNumber - 2) * 180;
+
+        let ax = coords[letter[1]].x - coords[letter[0]].x;
+        let ay = coords[letter[1]].y - coords[letter[0]].y;
+        let bx = coords[letter[0]].x - coords[letter[2]].x;
+        let by = coords[letter[0]].y - coords[letter[2]].y;
+
+        let angle, sign = -1, result;
+
+        angle = Math.atan2(ax * by - ay * bx, ax * bx + ay * by);
+
+        if (polygonPointsNumber == 3) {
+            if (angle &lt; 0) {
+                angle = -angle;
+                sign = 1;
+            }
+            result = 180 - angle * 180 / Math.PI;
+        } else {
+            if (sign &lt; 0) sign = 1;
+            result = 180 + angle * 180 / Math.PI;
+            if (math.round(result) == angleSum) result = angleSum - result;
+        }
+
+        return [sign, result];
+    }
+
+    presenter.drawAngles = function (idx) {
+        currentPoint = idx;
+
+        let angle, angles = [], realAngles = [], signs = [], arcPoints, result;
+        const angleSum = (polygonPointsNumber - 2) * 180;
+        let letter, sum = 0, tmpSum = 0;
+
+        // first collect all angles
+        for (let i = 0; i &lt; polygonPointsNumber; i++) {
+            result = getAngle(i);
+            signs.push(result[0]);
+            angles.push(result[1]);
+            realAngles.push(result[1]);
+            if (i != idx) sum += Math.round(result[1]);
+            tmpSum += result[1];
+        }
+
+        // then round that angle that is beeing dragged
+        for (let i = 0; i &lt; polygonPointsNumber; i++) {
+            angle = i != idx ? angles[i] : angleSum - sum;
+            if (angle &lt; 0) angle = angle + angleSum;
+            if (angle &gt;= angleSum &amp;&amp; polygonPointsNumber != 3) angle = sum - angleSum;
+            angles[i] = angle;
+            if (angle &gt;= 0 &amp;&amp; angle &lt;= angleSum &amp;&amp; !isNaN(angle) &amp;&amp; !isNaN(tmpSum) &amp;&amp; Math.round(tmpSum) &lt;= angleSum) {
+                letter = getRightLetters(i);
+                arcPoints = getArcPoints(signs[i], polygonRadius, coords[letter[0]], coords[letter[1]], coords[letter[2]]);
+                drawArc(i, coords[letter[0]], polygonRadius, arcPoints, angle);
+                positionText(realAngles[i], angle, i, arcPoints, letter);
+                setAngleType(i, angle);
+                setEdgeLengths(i, angle);
+            }
+        }
+
+        setPolygonType(angles);
+
+        if (polygonPointsNumber == 3) {
+            drawFilledHalfCircle(angles[0], angles[1], angles[2]);
+        } else if (polygonPointsNumber == 4) {
+            drawFilledFullCircle(angles[0], angles[1], angles[2], angles[3]);
+        }
+    };
+
+    function setAngleType(idx, angle) {
+        const angleType = presenter.view.querySelector(&apos;.svg_angle_type&apos; + idx);
+        angle = Math.round(angle);
+        if (angle &gt; 90) {
+            angleType.innerText = ANGLE_TYPE[2];
+        } else if (angle == 90) {
+            angleType.innerText = ANGLE_TYPE[1];
+        } else {
+            angleType.innerText = ANGLE_TYPE[0];
+        }
+
+        const angleTitle = presenter.view.querySelector(&apos;.svg_title&apos; + idx);
+        let csTitle = window.getComputedStyle(angleTitle, null);
+        let titleWidth = parseFloat(csTitle.width);
+        let titleLeft = parseFloat(csTitle.left);
+
+        angleType.style.top = angleTitle.style.top;
+        angleType.style.left = titleLeft + titleWidth + &apos;px&apos;;// - angleWidth / 2 + &apos;px&apos;;
+    }
+
+    function setPolygonType (angles) {
+        const polygonType = presenter.view.querySelector(&apos;.svg_polygon_type&apos;);
+        polygonType.innerText = TRIANGLE_TYPE[0];
+        for (let i = 0; i &lt; polygonPointsNumber; i++) {
+            let angle = Math.round(angles[i]);
+            if (angle &gt; 90) {
+                polygonType.innerText = TRIANGLE_TYPE[2];
+                break;
+            } else if (angle == 90) {
+                polygonType.innerText = TRIANGLE_TYPE[1];
+                break;
+            }
+        }
+        if (Math.round(angles[0]) == Math.round(angles[1]) &amp;&amp; Math.round(angles[0]) == Math.round(angles[2])) {
+            polygonType.innerText = TRIANGLE_TYPE[3];
+        }
+    }
+
+    function drawFilledHalfCircle(angA, angB, angC) {
+        let arcCommand, P1 = {}, P2 = {};
+        let centerX = circleRadius + 2,
+            centerY = circleRadius + 1;
+        let stopX = centerX - circleRadius,
+            stopY = centerY;
+        let startX = centerY * 2,
+            startY = centerY;
+        P1[&apos;x&apos;] = centerX - circleRadius * Math.cos(angA * Math.PI / 180);
+        P1[&apos;y&apos;] = centerY - circleRadius * Math.sin(angA * Math.PI / 180);
+        P2[&apos;x&apos;] = centerX + circleRadius * Math.cos(angC * Math.PI / 180);
+        P2[&apos;y&apos;] = centerY - circleRadius * Math.sin(angC * Math.PI / 180);
+
+        arcCommand = &apos;M &apos; + centerX + &apos; &apos; + centerY + &apos; L &apos; + P1.x + &apos; &apos; + P1.y +
+            &apos; A &apos; + circleRadius + &apos; &apos; + circleRadius + &apos; 0 0 0 &apos; + stopX + &apos; &apos; + stopY + &apos; Z&apos;;
+        presenter.svg_inner_circle.querySelector(&apos;.svg_angle0&apos;).setAttribute(&apos;d&apos;, arcCommand);
+
+        arcCommand = &apos;M &apos; + centerX + &apos; &apos; + centerY + &apos; L &apos; + P2.x + &apos; &apos; + P2.y +
+            &apos; A &apos; + circleRadius + &apos; &apos; + circleRadius + &apos; 0 0 0 &apos; + P1.x + &apos; &apos; + P1.y + &apos; Z&apos;;
+        presenter.svg_inner_circle.querySelector(&apos;.svg_angle1&apos;).setAttribute(&apos;d&apos;, arcCommand);
+
+        arcCommand = &apos;M &apos; + centerX + &apos; &apos; + centerY + &apos; L &apos; + startX + &apos; &apos; + startY +
+            &apos; A &apos; + circleRadius + &apos; &apos; + circleRadius + &apos; 0 0 0 &apos; + P2.x + &apos; &apos; + P2.y + &apos; Z&apos;;
+        presenter.svg_inner_circle.querySelector(&apos;.svg_angle2&apos;).setAttribute(&apos;d&apos;, arcCommand);
+    }
+
+    function drawFilledFullCircle(angA, angB, angC, angD) {
+        if (isNaN(angA) || isNaN(angB) || isNaN(angC) || isNaN(angD)) return;
+
+        let arcCommand, P1 = {}, P2 = {}, P3 = {}, P4 = {};
+        let centerX = 100, centerY = 100;
+        P1[&apos;x&apos;] = centerX + circleRadius * Math.cos((angA + angB + angC + angD) * Math.PI / 180);
+        P1[&apos;y&apos;] = centerY + circleRadius * Math.sin((angA + angB + angC + angD) * Math.PI / 180);
+        P2[&apos;x&apos;] = centerX + circleRadius * Math.cos((angA + angB + angC) * Math.PI / 180);
+        P2[&apos;y&apos;] = centerY + circleRadius * Math.sin((angA + angB + angC) * Math.PI / 180);
+        P3[&apos;x&apos;] = centerX + circleRadius * Math.cos((angA + angB) * Math.PI / 180);
+        P3[&apos;y&apos;] = centerY + circleRadius * Math.sin((angA + angB) * Math.PI / 180);
+        P4[&apos;x&apos;] = centerX + circleRadius * Math.cos((angA) * Math.PI / 180);
+        P4[&apos;y&apos;] = centerY + circleRadius * Math.sin((angA) * Math.PI / 180);
+
+        let arcElemA = angA &gt; 180 ? &apos; 0 1 0 &apos; : &apos; 0 0 0 &apos;;
+        let arcElemB = angB &gt; 180 ? &apos; 0 1 0 &apos; : &apos; 0 0 0 &apos;;
+        let arcElemC = angC &gt; 180 ? &apos; 0 1 0 &apos; : &apos; 0 0 0 &apos;;
+        let arcElemD = angD &gt; 180 ? &apos; 0 1 0 &apos; : &apos; 0 0 0 &apos;;
+
+        arcCommand = &apos;M &apos; + centerX + &apos; &apos; + centerY + &apos; L &apos; + P1.x + &apos; &apos; + P1.y +
+            &apos; A &apos; + circleRadius + &apos; &apos; + circleRadius + arcElemD + P2.x + &apos; &apos; + P2.y + &apos; Z&apos;;
+        presenter.svg_inner_circle.querySelector(&apos;.svg_circle_angle3&apos;).setAttribute(&apos;d&apos;, arcCommand);
+
+        arcCommand = &apos;M &apos; + centerX + &apos; &apos; + centerY + &apos; L &apos; + P2.x + &apos; &apos; + P2.y +
+            &apos; A &apos; + circleRadius + &apos; &apos; + circleRadius + arcElemC + P3.x + &apos; &apos; + P3.y + &apos; Z&apos;;
+        presenter.svg_inner_circle.querySelector(&apos;.svg_circle_angle2&apos;).setAttribute(&apos;d&apos;, arcCommand);
+
+        arcCommand = &apos;M &apos; + centerX + &apos; &apos; + centerY + &apos; L &apos; + P3.x + &apos; &apos; + P3.y +
+            &apos; A &apos; + circleRadius + &apos; &apos; + circleRadius + arcElemB + P4.x + &apos; &apos; + P4.y + &apos; Z&apos;;
+        presenter.svg_inner_circle.querySelector(&apos;.svg_circle_angle1&apos;).setAttribute(&apos;d&apos;, arcCommand);
+
+        arcCommand = &apos;M &apos; + centerX + &apos; &apos; + centerY + &apos; L &apos; + P4.x + &apos; &apos; + P4.y +
+            &apos; A &apos; + circleRadius + &apos; &apos; + circleRadius + arcElemA + P1.x + &apos; &apos; + P1.y + &apos; Z&apos;;
+        presenter.svg_inner_circle.querySelector(&apos;.svg_circle_angle0&apos;).setAttribute(&apos;d&apos;, arcCommand);
+    }
+
+    presenter.updateCoordinates = function () {
+        let polygonCommand = &apos;&apos;;
+        const points = presenter.polygon.points;
+
+        presenter.view.querySelectorAll(&apos;.handle&apos;).forEach((handle, idx) =&gt; {
+            if (idx &gt;= polygonPointsNumber) return;
+
+            let cs = window.getComputedStyle(handle, null);
+            let width = parseFloat(cs.width);
+            let height = parseFloat(cs.height);
+            let left = coords[LETTERS[idx]].x - width / 2;
+            let top = coords[LETTERS[idx]].y - height / 2;
+            handle.style.left = left + &apos;px&apos;;
+            handle.style.top = top + &apos;px&apos;;
+
+            if (points.length) {
+                const point = points.getItem(idx);
+                point.x = left + width / 2;
+                point.y = top + height / 2;
+            }
+
+            polygonCommand += `${left + width / 2},${top + height / 2} `;
+        });
+
+        presenter.polygon.setAttribute(&apos;points&apos;, polygonCommand);
+    };
+
+    function setNewCoordinates() {
+        let width = parseInt(presenter.view.style.width);
+        let height = parseInt(presenter.view.style.height);
+
+        let X = [], Y = [];
+        let coordVals = Object.values(coords);
+        coordVals.forEach((val, idx) =&gt; {
+            X.push(val.x);
+            Y.push(val.y);
+        });
+        let maxX = Math.max(...X);
+        let minX = Math.min(...X);
+        let maxY = Math.max(...Y);
+        let minY = Math.min(...Y);
+
+        if (maxX &gt; width) {         // point too far right - change coords proportional to left      
+            let len = maxX - minX;
+            let dX;
+            if (len &lt; width) {      // whole object can be moved left
+                dX = minX - (width - len) / 2;
+            } else {
+                const xs = X.reduce((p, c) =&gt; p + c, 0) / 3;
+                const ys = Y.reduce((p, c) =&gt; p + c, 0) / 3;
+                const ratio = 0.9 * width / len;
+                coordVals.forEach((val, idx) =&gt; {
+                    val.x = xs + (val.x - xs) * ratio;
+                    val.y = ys + (val.y - ys) * ratio;
+                    X[idx] = val.x;
+                    Y[idx] = val.y;
+                });
+                maxX = Math.max(...X);
+                minX = Math.min(...X);
+                len = maxX - minX;
+                dX = minX - (width - len) / 2;
+            }
+            for (let val of coordVals) val.x -= dX;
+        }
+
+        if (maxY &gt; height) {        // point too far down - change coords proportional to top
+            const len = maxY - minY;
+            if (len &lt; height) {     // whole object can be moved up
+                console.log(&apos;whole object can be moved up&apos;);
+            } else {
+                console.log(&apos;object must be moved up and proportionally changed&apos;);
+            }
+        }
+    }
+
+    presenter.setAnglesTypeVisibility = function (isVisible) {
+        $(&apos;.svg_angle_type&apos;).css(&apos;visibility&apos;, isVisible ? &apos;visible&apos; : &apos;hidden&apos;);
+        presenter.isAngleTypesVisible = isVisible;
+    };
+
+    presenter.showAngleTypes = function () {
+        presenter.setAnglesTypeVisibility(true);
+        presenter.drawAngles();
+    };
+
+    presenter.hideAngleTypes = function () {
+        presenter.setAnglesTypeVisibility(false);
+        presenter.drawAngles();
+    };
+
+    presenter.setAngleValuesVisibility = function (isVisible) {
+        $(&apos;.svg_txt&apos;).css(&apos;visibility&apos;, isVisible ? &apos;visible&apos; : &apos;hidden&apos;);
+        presenter.isAngleValuesVisible = isVisible;
+    };
+
+    presenter.showAngleValues = function () {
+        presenter.setAngleValuesVisibility(true);
+        presenter.drawAngles();
+    };
+
+    presenter.hideAngleValues = function () {
+        presenter.setAngleValuesVisibility(false);
+        presenter.drawAngles();
+    };
+
+    presenter.setPolygonTypeVisibility = function (isVisible) {
+        $(&apos;.svg_polygon_type&apos;).css(&apos;visibility&apos;, isVisible ? &apos;visible&apos; : &apos;hidden&apos;);
+        presenter.isPolygonTypeVisible = isVisible;
+    };
+
+    presenter.showPolygonType = function () {
+        presenter.setPolygonTypeVisibility(true);
+    };
+
+    presenter.hidePolygonType = function () {
+        presenter.setPolygonTypeVisibility(false);
+    };
+
+    presenter.setVisibility = function (isVisible) {
+        presenter.$view.css(&apos;visibility&apos;, isVisible ? &apos;visible&apos; : &apos;hidden&apos;);
+        presenter.isVisible = isVisible;
+    };
+
+    presenter.show = function () {
+        presenter.setVisibility(true);
+    };
+
+    presenter.hide = function () {
+        presenter.setVisibility(false);
+    };
+
+    presenter.executeCommand = function (name, params) {
+        var commands = {
+            &apos;show&apos;: presenter.show,
+            &apos;hide&apos;: presenter.hide,
+            &apos;showAngleTypes&apos;: presenter.showAngleTypes,
+            &apos;hideAngleTypes&apos;: presenter.hideAngleTypes,
+            &apos;showAngleValues&apos;: presenter.showAngleValues,
+            &apos;hideAngleValues&apos;: presenter.hideAngleValues,
+            &apos;showPolygonType&apos;: presenter.showPolygonType,
+            &apos;hidePolygonType&apos;: presenter.hidePolygonType
+        };
+
+        Commands.dispatch(commands, name, params, presenter);
+    };
+
+    presenter.reset = function () {
+        angleSaved = [];
+        collectModelData(presenter.model);
+        setNewCoordinates();
+        presenter.updateCoordinates();
+        presenter.drawAngles();
+        presenter.updatePolygon();
+    };
+
+    presenter.getState = function () {
+        clearTimeout(timeoutID);
+        return JSON.stringify({
+            previousLayout: previousLayout,
+            isVisible: presenter.isVisible,
+            isPolygonTypeVisible: presenter.isPolygonTypeVisible,
+            isAngleTypesVisible: presenter.isAngleTypesVisible,
+            isAngleValuesVisible: presenter.isAngleValuesVisible,
+            currentPoint: currentPoint,
+            angleSaved: angleSaved,
+            coords: coords
+        });
+    };
+
+    presenter.setState = function (state) {
+        let parsedState = JSON.parse(state);
+        coords = parsedState.coords;
+        angleSaved = parsedState.angleSaved;
+
+        presenter.setVisibility(parsedState.isVisible);
+        presenter.setAnglesTypeVisibility(parsedState.isAngleTypesVisible);
+        presenter.setAngleValuesVisibility(parsedState.isAngleValuesVisible);
+        presenter.setPolygonTypeVisibility(parsedState.isPolygonTypeVisible);
+
+        // layout changed - check if drawing is too big
+        if (parsedState.previousLayout != currentLayout) setNewCoordinates();
+
+        presenter.updateCoordinates();
+        presenter.drawAngles(parsedState.currentPoint);
+        presenter.updatePolygon();
+    };
+
+    return presenter;
+}</presenter></addon>

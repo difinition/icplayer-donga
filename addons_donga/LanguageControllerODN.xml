@@ -1,0 +1,196 @@
+<?xml version='1.0' encoding='UTF-8' ?><addon id='LanguageControllerODN'><metadata></metadata><model><property name='Translations' displayName='' type='list'><property name='PageNr' displayName='Page Number' type='string' isLocalized='false' isDefault='false'/><property name='ModuleID' displayName='Module ID' type='string' isLocalized='false' isDefault='false'/><property name='PropertyName' displayName='Property Name' type='string' isLocalized='false' isDefault='false'/><property name='Text' displayName='' type='text' isLocalized='false' isDefault='false'/></property></model><resources></resources><css></css><view></view><preview></preview><presenter>function AddonLanguageControllerODN_create(){
+			
+    var presenter = function(){}
+
+    presenter.setPlayerController = function(controller) {
+        presenter.playerController = controller;
+        presenter.eventBus = controller.getEventBus();
+        presenter.eventBus.addEventListener(&apos;ValueChanged&apos;, this);
+        // presenter.eventBus.addEventListener(&apos;ShowAnswers&apos;, this);
+        // presenter.eventBus.addEventListener(&apos;HideAnswers&apos;, this);
+        // presenter.eventBus.addEventListener(&apos;PageLoaded&apos;, this);
+ 
+        presenter.presentation = controller.getPresentation();
+        // presenter.commander = controller.getCommands();
+        presenter.currentIndex = parseInt(controller.getCurrentPageIndex(),10);
+        presenter.currentPage = presenter.currentIndex + 1;
+        presenter.lastPageIndex = parseInt(presenter.presentation.getPageCount(),10)-1;
+        // presenter.scoreService = controller.getScore();
+    };
+    
+    presenter.run = function(view, model){
+        //console.log(&quot;LanguageControllerODN run!&quot;);
+        presenter.model = model;
+        //console.log(&quot;model.Translations:&quot;, model.Translations);
+
+        presenter.Translations = new Array();
+        model.Translations.forEach(function(item){
+            if(presenter.Translations[item.PageNr]== null) presenter.Translations[item.PageNr] = new Array();
+            presenter.Translations[item.PageNr].push({
+                ModuleID:item.ModuleID,
+                PropertyName: item.PropertyName,
+                Text: item.Text
+            });
+        })
+        //console.log(&quot;Translations[presenter.currentPage]:&quot;, presenter.Translations[presenter.currentPage]);
+        presenter.langBtn = presenter.playerController.getFooterModule(&apos;LangBtn&apos;);
+        presenter.doTranslationsExistOnCurrentPage = (presenter.Translations[presenter.currentPage] !== undefined);
+        
+        presenter.initLogic();
+    }
+
+    presenter.initLogic = function(){
+        setTimeout(function(){
+            //if( presenter.doTranslationsExistOnCurrentPage ){
+                //console.log(&quot;show lang btn&quot;)
+                //presenter.langBtn.show();
+                if(presenter.langBtn != null){
+                    if( presenter.langBtn.isSelected() ){
+                        presenter.translatePage();
+                    }
+                }
+
+            //}else{
+            //    console.log(&quot;NIE MA TŁUMACZEŃ&quot;)
+            //    console.log(&quot;hide lang btn&quot;)
+            
+            //        presenter.langBtn.hide();
+                
+            //}
+        },0);
+    }
+
+    presenter.translatePage = function(){
+        //PAGENAME
+        var pageTitleTranslationFromModel = presenter.model.Translations.filter(obj =&gt; {
+            return obj.PropertyName == presenter.currentPage;
+        });
+        $(&quot;.pagename&quot;).get(0).innerHTML = pageTitleTranslationFromModel[0].Text;
+
+        //TABLE OF CONTENTS ON PAGE1
+        if(presenter.currentPage == 1){
+            let tocModuleElements = $(presenter.playerController.getModule(&apos;Table_Of_Contents1&apos;).getView()).find(&quot;li a&quot;);
+            var pageTitlesTranslations = presenter.model.Translations.filter(obj =&gt; {
+                return obj.PageNr == &apos;1&apos;;
+            });
+            tocModuleElements.each(function(k,v){
+                var thisPageTitle = pageTitlesTranslations.filter(obj =&gt; { return obj.PropertyName == (k+2); });
+                $(v).html(thisPageTitle[0].Text);
+            });
+        }
+
+        //MODELVIEWER
+        let modelViewerModule = presenter.playerController.getModule(&apos;ModelViewerODN1&apos;);
+        if(modelViewerModule != null &amp;&amp; presenter.Translations[presenter.currentPage] !== undefined){
+
+            console.log(&apos;translations for this page: &apos;)
+            
+            presenter.Translations[presenter.currentPage].forEach(function(translation, i){
+                //console.log(&apos;i, translation: &apos;,i,translation);
+
+                if( translation.ModuleID == &quot;ModelViewerODN1&quot; ){
+
+                    //ANNOTATIONS
+                    if(translation.PropertyName == &quot;Annotations&quot;){
+                        presenter.modelViewer = $( modelViewerModule.getView() ).find(&quot;model-viewer&quot;).get(0);
+                        $(presenter.modelViewer).html(&quot;&quot;);
+                        $(presenter.modelViewer).append(translation.Text);
+                    }
+
+                    //LICENSE INFORMATION IN MODEL VIEWER&apos;s .copyContainer
+                    if(translation.PropertyName == &quot;CopyInfo&quot;){
+                        //console.log(&apos;CopyInfo Found&apos;)
+                        //console.log(translation)
+                        presenter.copyContainer = $( modelViewerModule.getView() ).find(&quot;.copyContainer&quot;).get(0);
+                        $(presenter.copyContainer).html(&quot;&quot;);
+                        $(presenter.copyContainer).append(translation.Text);
+                        
+                        let link = presenter.copyContainer.querySelector(&apos;a&apos;);
+                        if (link) {
+                            link.addEventListener(&apos;click&apos;, function(event) {
+                                event.preventDefault();
+                                window.open(link.getAttribute(&apos;href&apos;), &apos;_blank&apos;);
+                            });
+                        }
+                    }
+                }
+
+            });
+            
+            //toggle annotaions after translation according to modelviewer state
+            modelViewerModule.getAnnotationsVisibility() == &quot;visible&quot; ? modelViewerModule.showAnnotations() : modelViewerModule.hideAnnotations();
+        }
+
+        
+        
+
+        //LICENSE INFORMATION PAGE
+        let textModule = presenter.playerController.getModule(&apos;Text1&apos;);
+        if( textModule != null &amp;&amp; presenter.Translations[presenter.currentPage] !== undefined){
+            if(presenter.Translations[presenter.currentPage][0].ModuleID == &quot;Text1&quot;){
+                let licenseInfoElements = $( textModule.getView() ).find(&quot;li span&quot;);
+                let txt = presenter.Translations[presenter.currentPage][0].Text;
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(txt, &quot;text/html&quot;);
+                const liElements = doc.querySelectorAll(&quot;li&quot;);
+                let translatedElementes = [];
+
+                liElements.forEach(function(li) {
+                    translatedElementes.push(li.innerHTML);
+                });
+
+                licenseInfoElements.each(function(k,v){
+                    $(v).html(translatedElementes[k]);
+                });
+            }
+            
+        }
+    }
+
+    presenter.onEventReceived = function (eventName, eventData) {
+        // === LangBtn Clicked ===
+        if (eventData.source == &apos;LangBtn&apos;) {
+            if(eventData.value == 1){
+                presenter.translatePage();//translate to EN
+            }else{
+                presenter.playerController.getCommands().gotoPageIndex(presenter.currentIndex);//reload page to have it in polish
+            }
+        }
+    };
+
+    presenter.setShowErrorsMode = function(){
+        //element.innerHTML = &apos;setShowErrorsMode&apos;;
+    }
+    
+    presenter.setWorkMode = function(){
+        //element.innerHTML = &apos;setWorkMode&apos;;
+    }
+    
+    presenter.reset = function(){
+        //element.innerHTML = &apos;Reset&apos;;
+    }
+    
+    presenter.getErrorCount = function(){
+        //return 7;
+    }
+    
+    presenter.getMaxScore = function(){
+        //return 3;
+    }
+    
+    presenter.getScore = function(){
+        //return 1;
+    }
+    
+    presenter.getState = function(){
+        //element.innerHTML = &apos;Get state&apos;;
+        //return &quot;State saved&quot;;
+    }
+
+    presenter.setState = function(state){
+        presenter.initLogic();//needed for setState of langBtn
+    }
+
+    return presenter;
+}</presenter></addon>

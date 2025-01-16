@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+
+<addon id='Page_Name'>
+	<model>
+		<property name="printable" nameLabel="printable_name_label" type="{No, Don't randomize, Randomize}" />
+	</model>
+</addon>

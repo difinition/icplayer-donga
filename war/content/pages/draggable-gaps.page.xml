@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<page layout="pixels">
+
+	<modules>
+		
+		<sourceListModule id="sl1" left='40' top='5' width='640' height='40'>
+			<items>
+				<item text="didn&apos;t" type="string"/>
+				<item text="\(a&gt;0\)" type="string"/>
+				<item text="\(a&lt;0\)" type="string"/>
+				<item text="\(\frac{1}{2}\)" type="string"/>
+			</items>
+		</sourceListModule>
+		
+		<sourceListModule id="sl2" left='40' top='50' width='640' height='40'>
+			<items>
+				<item text="didn&apos;t" type="string"/>
+				<item text="volvo" type="string"/>
+				<item text="Opcja 1" type="string"/>
+				<item text="Pozostałe z dosyć **długim** tekstem, który __nie powinien__ się złamać" type="string"/>
+			</items>
+		</sourceListModule>
+		
+		<textModule id="cloze" left='40' top='200' width='640' height='100'>
+			<text draggable='true' gapWidth="200" isActivity="true"><![CDATA[A parabola defined by the function \(y=ax^2+bx+c\) opens upwards if \gap{Pozostałe z dosyć **długim** tekstem, który __nie powinien__ się złamać} and opens downwards if \gap{\(a&lt;0\)}.<br>]]></text>
+		</textModule>
+		
+		<imageSourceModule id="is1" left="100" top="350" width="64" height="64">
+			<image src="media/vimeo.png"/>
+		</imageSourceModule>
+		<imageSourceModule id="is2" left="200" top="350" width="64" height="64">
+			<image src="media/puzzle.png"/>
+		</imageSourceModule>
+		<imageSourceModule id="is3" left="300" top="350" width="64" height="64">
+			<image src="media/flash.png"/>
+		</imageSourceModule>
+
+		<imageGapModule id="ig1" left="150" top="450" width="64" height="64">
+			<gap answerId="is2"/>
+		</imageGapModule>
+
+		<imageGapModule id="ig1" left="250" top="450" width="64" height="64">
+			<gap answerId="is2" isActivity="false"/>
+		</imageGapModule>
+		
+		<checkModule  left="520" top="500" width="80" height="60" style="">
+			<button checkTitle="" unCheckTitle=""/>
+		</checkModule>
+		
+		<buttonModule  left="600" top="500" width="80" height="60" style="">
+			<button type="reset" text=""/>
+		</buttonModule>
+		
+	</modules>
+
+</page>

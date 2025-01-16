@@ -1,0 +1,123 @@
+.gamememo_container table {
+    border-spacing: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.gamememo_container table td {
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+.gamememo_container table td img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+}
+
+.gamememo_container p {
+    text-align: center;
+}
+
+.gamememo_container div.cell {
+    float: left;
+    position: relative;
+    overflow: hidden;
+}
+
+
+.gamememo_container div.placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+
+.gamememo_container div.front {
+    cursor: pointer;
+}
+
+.gamememo_container div.front_A {
+    background: #ff0000;
+}
+
+.gamememo_container div.front_A:hover {
+    background: #aa0000;
+}
+
+.gamememo_container div.front_B {
+    background: #0000ff;
+}
+
+.gamememo_container div.front_B:hover {
+    background: #0000bb;
+}
+
+.gamememo_container div.mismatch_mark {
+    color: #cc0000;
+    font-weight: bold;
+    font-size: 64pt;
+    text-align: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    vertical-align: middle;
+    margin-top: -0.15ex;
+    cursor: default;
+    line-height: normal;
+}
+
+.gamememo_container .memo-lock-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #cc0000;
+    opacity: 0.5;
+}
+
+.gamememo_container .memo-lock-screen-info {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin-top: 10%;
+    text-align: center;
+    color: #ffffff;
+}
+
+.gamememo_container div.tick_mark {
+    color: #11cc11;
+    font-weight: bold;
+    font-size: 64pt;
+    text-align: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    vertical-align: middle;
+    margin-top: -0.15ex;
+    cursor: default;
+    line-height: normal;
+}
+
+.gamememo_container .keyboard_navigation_active_element {
+    box-shadow: inset 0px 0px 0px 2px #00ff44 !important;
+  	outline: none;
+}
+
+.gamememo_container span.gamememo_alt_text {
+    clip: rect(1px, 1px, 1px, 1px);
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    position: absolute !important;
+}

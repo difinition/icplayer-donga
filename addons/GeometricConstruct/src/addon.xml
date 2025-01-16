@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+
+<addon id='GeometricConstruct'>
+	<model>
+		<property name="strokeColor" nameLabel="GeometricConstruct_property_stroke_color" type="string"/>
+		<property name="fillColor" nameLabel="GeometricConstruct_property_fill_color" type="string"/>
+		<property name="figures" displayName="Figures" nameLabel="GeometricConstruct_property_figures" type="staticlist">
+
+			<property name="Point" nameLabel="GeometricConstruct_property_point" type="staticrow">
+				<property name="Point" nameLabel="GeometricConstruct_property_point" type="string"/>
+				<property name="Disabled" nameLabel="GeometricConstruct_property_disabled" type="boolean"/>
+			</property>
+
+			<property name="Circle" nameLabel="GeometricConstruct_property_circle" type="staticrow">
+				<property name="Circle" nameLabel="GeometricConstruct_property_circle" type="string"/>
+				<property name="Disabled" nameLabel="GeometricConstruct_property_disabled" type="boolean"/>
+			</property>
+
+			<property name="CircleWithPoint" nameLabel="GeometricConstruct_property_circle_with_point" type="staticrow">
+				<property name="CircleWithPoint" nameLabel="GeometricConstruct_property_circle_with_point" type="string"/>
+				<property name="Disabled" nameLabel="GeometricConstruct_property_disabled" type="boolean"/>
+			</property>
+
+			<property name="Compasses" nameLabel="GeometricConstruct_property_compasses" type="staticrow">
+				<property name="Compasses" nameLabel="GeometricConstruct_property_compasses" type="string"/>
+				<property name="Disabled" nameLabel="GeometricConstruct_property_disabled" type="boolean"/>
+			</property>
+
+			<property name="ArcWithCenterPoint" nameLabel="GeometricConstruct_property_arc_with_center_point" type="staticrow">
+				<property name="ArcWithCenterPoint" nameLabel="GeometricConstruct_property_arc_with_center_point" type="string"/>
+				<property name="Disabled" nameLabel="GeometricConstruct_property_disabled" type="boolean"/>
+			</property>
+
+			<property name="Angle" nameLabel="GeometricConstruct_property_angle" type="staticrow">
+				<property name="Angle" nameLabel="GeometricConstruct_property_angle" type="string"/>
+				<property name="Disabled" nameLabel="GeometricConstruct_property_disabled" type="boolean"/>
+			</property>
+
+			<property name="LineSegment" nameLabel="GeometricConstruct_property_line_segment" type="staticrow">
+				<property name="LineSegment" nameLabel="GeometricConstruct_property_line_segment" type="string"/>
+				<property name="Disabled" nameLabel="GeometricConstruct_property_disabled" type="boolean"/>
+			</property>
+
+			<property name="HalfOpenLineSegment" nameLabel="GeometricConstruct_property_half_open_line_segment" type="staticrow">
+				<property name="HalfOpenLineSegment" nameLabel="GeometricConstruct_property_half_open_line_segment" type="string"/>
+				<property name="Disabled" nameLabel="GeometricConstruct_property_disabled" type="boolean"/>
+			</property>
+
+			<property name="OpenLineSegment" nameLabel="GeometricConstruct_property_open_line_segment" type="staticrow">
+				<property name="OpenLineSegment" nameLabel="GeometricConstruct_property_open_line_segment" type="string"/>
+				<property name="Disabled" nameLabel="GeometricConstruct_property_disabled" type="boolean"/>
+			</property>
+
+		</property>
+		<property name="labels" displayName="Labels" nameLabel="GeometricConstruct_property_labels" type="staticlist">
+
+			<property name="Cursor" nameLabel="GeometricConstruct_property_cursor" type="staticrow">
+				<property name="Cursor" nameLabel="GeometricConstruct_property_cursor" type="string"/>
+			</property>
+
+			<property name="CirclePopupTitle" nameLabel="GeometricConstruct_property_circle_popup_title" type="staticrow">
+				<property name="CirclePopupTitle" nameLabel="GeometricConstruct_property_circle_popup_title" type="string"/>
+			</property>
+
+			<property name="Accept" nameLabel="GeometricConstruct_property_accept" type="staticrow">
+				<property name="Accept" nameLabel="GeometricConstruct_property_accept" type="string"/>
+			</property>
+
+			<property name="Cancel" nameLabel="GeometricConstruct_property_cancel" type="staticrow">
+				<property name="Cancel" nameLabel="GeometricConstruct_property_cancel" type="string"/>
+			</property>
+
+			<property name="Radius" nameLabel="GeometricConstruct_property_radius" type="staticrow">
+				<property name="Radius" nameLabel="GeometricConstruct_property_radius" type="string"/>
+			</property>
+
+		</property>
+		<property name="labelsVisibility" nameLabel="GeometricConstruct_property_labels_visibility" type="boolean"/>
+		<property name="angleMeasuresVisibility" nameLabel="GeometricConstruct_property_angle_measures_visibility" type="boolean"/>
+		<property name="DisableUndoRedoButton" nameLabel="GeometricConstruct_property_disable_undo_redo" type="boolean"/>
+		<property name="DisableResetButton" nameLabel="GeometricConstruct_property_disable_reset_button" type="boolean"/>
+		<property name="DisableLabelToggle" nameLabel="GeometricConstruct_property_disable_label_toggle" type="boolean"/>
+		<property name="xAxisPosition" nameLabel="GeometricConstruct_property_x_axis_position" type="string"/>
+		<property name="yAxisPosition" nameLabel="GeometricConstruct_property_y_axis_position" type="string"/>
+		<property name="axisIncrement" nameLabel="GeometricConstruct_property_axis_increment" type="string"/>
+		<property name="unitLength" nameLabel="GeometricConstruct_property_unit_length" type="string"/>
+		<property name="axisColor" nameLabel="GeometricConstruct_property_axis_color" type="string"/>
+		<property name="gridColor" nameLabel="GeometricConstruct_property_grid_color" type="string"/>
+		<property name="hideXAxis" nameLabel="GeometricConstruct_property_hide_x_axis" type="boolean"/>
+		<property name="hideYAxis" nameLabel="GeometricConstruct_property_hide_y_axis" type="boolean"/>
+		<property name="angleDecimalPoint" nameLabel="GeometricConstruct_property_angle_decimal_point" type="string"/>
+		<property name="lengthDecimalPoint" nameLabel="GeometricConstruct_property_length_decimal_point" type="string"/>
+		<property name="lengthMeasuresVisibility" nameLabel="GeometricConstruct_property_length_visibility" type="boolean"/>
+
+	</model>
+</addon>

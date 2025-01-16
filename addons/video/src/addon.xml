@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+
+<addon id='video' xmlns="http://icplayer.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://icplayer.com ../../tools/addon.xsd">
+	<model>
+		<property name='Files' nameLabel="video_property_files" type='list' isDefault='true'>
+			<property name="Ogg video" displayName="Ogv video" nameLabel="video_property_ogg_video" type="video" />
+			<property name="MP4 video" nameLabel="video_property_mp4_video" type="video" />
+			<property name="WebM video" nameLabel="video_property_webm_video" type="video" />
+			<property name="Subtitles" nameLabel="video_property_subtitles" type="text" isLocalized="true" />
+			<property name="Poster" nameLabel="video_property_poster" type="image" />
+			<property name="ID" nameLabel="video_property_id" type="string" />
+            <property name="Loop video" nameLabel="video_property_loop_video" type="boolean" />
+			<property name="AlternativeText" nameLabel="video_property_alternative_text" type="string" />
+			<property name="time_labels" nameLabel="video_property_time_labels" type="text"/>
+			<property name="Audio Description" nameLabel="video_property_audiodescription" type="text" isLocalized="true" />
+		</property>
+		<property name="Show video" nameLabel="video_property_show_video" type="string" />
+		<property name="Narration" nameLabel="video_property_narration" type="narration" isLocalized="true" />
+        <property name="Hide default controls" nameLabel="video_property_hide_default_controls" type="boolean" />
+        <property name="Hide subtitles" nameLabel="video_property_hide_subtitles" type="boolean" />
+		<property name="Show play button" nameLabel="video_property_show_play_button" type="boolean"/>
+		<property name="speechTexts"  nameLabel="feedback_property_speech_texts" type="staticlist">
+            <property name="AudioDescriptionEnabled" nameLabel="video_property_description_enabled" type="staticrow">
+                <property name="AudioDescriptionEnabled" nameLabel="video_property_description_enabled" type="string"/>
+            </property>
+            <property name="AudioDescriptionDisabled" nameLabel="video_property_description_disabled" type="staticrow">
+                <property name="AudioDescriptionDisabled" nameLabel="video_property_description_disabled" type="string"/>
+            </property>
+        </property>
+        <property name="offlineMessage" nameLabel="video_property_offline_message" type="text" />
+		<property name="enableVideoSpeedController" nameLabel="enable_video_speed_controller" type="boolean" />
+		<property name="Base width" nameLabel="video_property_base_width" type="string" />
+		<property name="Base height" nameLabel="video_property_base_height" type="string" />
+	</model>
+</addon>

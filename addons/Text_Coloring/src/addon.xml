@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+
+<addon id='Text_Coloring' xmlns="http://icplayer.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://icplayer.com ../../tools/addon.xsd">
+	<model>
+		<property name="colors" displayName="Colors" type="list" nameLabel="Text_Coloring_property_colors">
+			<property name="id" displayName="Color ID" nameLabel="Text_Coloring_property_color_id" type="string" />
+			<property name="color" displayName="Color" nameLabel="Text_Coloring_property_color" type="string" />
+			<property name="description" displayName="Description" nameLabel="Text_Coloring_property_description" type="string" isLocalized="true"/>
+		</property>
+		<property name="text" displayName="Text" nameLabel="Text_Coloring_property_text" type="text" isDefault="true" isLocalized="true"/>
+		<property name="isNotActivity" displayName="Is Not Activity" nameLabel="Text_Coloring_property_is_not_activity" type="boolean" />
+		<property name="buttonsPosition" displayName="Buttons position" nameLabel="Text_Coloring_property_buttons_position" type="{left, top, bottom, right}" />
+		<property name="hideColorsButtons" displayName="Hide Color Buttons" nameLabel="Text_Coloring_property_hide_color_buttons" type="boolean" />
+		<property name="showAllAnswersInGradualShowAnswersMode" displayName="Show all answers in gradual show answers mode" nameLabel="Text_Coloring_property_show_all_answers_in_gradual_show_answers_mode" type="boolean" />
+		<property name="showSetEraserModeButton" displayName="Show set eraser mode button" nameLabel="Text_Coloring_property_show_set_eraser_mode_button" type="boolean" />
+		<property name="eraserButtonText" displayName="Eraser button text" nameLabel="Text_Coloring_property_eraser_button_text" type="string" isLocalized="true" />
+		<property name='Mode' nameLabel="Text_Selection_property_mode" type='{All selectable, Mark phrases to select}'/>
+		<property name="countErrors" displayName="Count Errors" nameLabel="Text_Coloring_property_count_errors" type="boolean" />
+		<property name="printable" nameLabel="printable_name_label" type="{No, Don't randomize, Randomize}"/>
+		<property name="Legend title" nameLabel="legend_title" type="string"/>
+		<property name="speechTexts" displayName="Speech texts" nameLabel="Text_Coloring_property_speech_texts" type="staticlist">
+			<property name="Selected" nameLabel="Text_Coloring_property_selected" type="staticrow">
+				<property name="Selected" nameLabel="Text_Coloring_property_selected" type="string"/>
+			</property>
+			<property name="Deselected" nameLabel="Text_Coloring_property_deselected" type="staticrow">
+				<property name="Deselected" nameLabel="Text_Coloring_property_deselected" type="string"/>
+			</property>
+			<property name="TextContent" nameLabel="Text_Coloring_property_TextContent" type="staticrow">
+				<property name="TextContent" nameLabel="Text_Coloring_property_TextContent" type="string"/>
+			</property>
+			<property name="Correct" nameLabel="Text_Coloring_property_correct" type="staticrow">
+				<property name="Correct" nameLabel="Text_Coloring_property_correct" type="string"/>
+			</property>
+			<property name="Incorrect" nameLabel="Text_Coloring_property_Incorrect" type="staticrow">
+				<property name="Incorrect" nameLabel="Text_Coloring_property_Incorrect" type="string"/>
+			</property>
+		</property>
+		<property displayName="Lang attribute" name="langAttribute" nameLabel="Text_Coloring_property_lang_attribute" type="string"/>
+	</model>
+</addon>

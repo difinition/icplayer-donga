@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<page layout="pixels" height="1000">
+
+	<modules>
+	
+		<textModule id="dropdown1" left='10' top='150' width='580' height='300' class="myText">
+			<text isDisabled="false">
+				&lt;p&gt;She {{2: likes | \(a \ne 0\) | \(ax^2 + bx + c = 0\) }} him very much (like).&lt;/p&gt;
+				&lt;p&gt;She {{2: don't | aaaaa aa | bbb bb }} him very much (like).&lt;/p&gt;
+				&lt;p&gt;Większy równy {{1:≥|&lt;p&gt;|≤|&lt;/p&gt;}} .&lt;/p&gt;
+			</text>
+		</textModule>
+
+		<buttonModule  left="45" top="10" width="50" height="50" style="">
+			<button type="popup" text="" onclick="commons/popup1"/>
+		</buttonModule>
+
+		<buttonModule  left="145" top="10" width="50" height="50" isVisible="false">
+			<button type="popup" text="" onclick="commons/popup1"/>
+		</buttonModule>
+
+		<addonModule id="addon2" addonId="EventSource" left='240' top='10' width='400' height='100'
+			isVisible="false">
+			<properties>
+				<property name="Text" type="string" value=""/>
+			</properties>
+		</addonModule>
+		
+		<buttonModule  left="45" top="910" width="50" height="50" style="">
+			<button type="popup" text="" onclick="commons/popup1"/>
+		</buttonModule>
+
+	</modules>
+
+</page>

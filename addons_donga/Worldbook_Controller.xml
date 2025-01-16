@@ -1,0 +1,2478 @@
+<?xml version='1.0' encoding='UTF-8' ?><addon id='Worldbook_Controller'><metadata></metadata><model><property name='Checks' displayName='Number of checks' type='string' isLocalized='false' isDefault='false'/><property name='Pages_IDs' displayName='Lesson pages&apos; IDs' type='text' isLocalized='false' isDefault='false'/><property name='ExternalPages' displayName='' type='list'><property name='PageNumber' displayName='' type='string' isLocalized='false' isDefault='false'/><property name='LessonID' displayName='' type='string' isLocalized='false' isDefault='false'/></property><property name='GoToPDFPlaceholder' displayName='Go To PDF Placeholder' type='string' isLocalized='false' isDefault='false'/><property name='HidePDF' displayName='Hide Go To PDF' type='boolean' isLocalized='false' isDefault='false'/><property name='ShowSBWB' displayName='Show SB/WB for student' type='boolean' isLocalized='false' isDefault='false'/><property name='Cover_IDs' displayName='Cover pages&apos; IDs' type='string' isLocalized='false' isDefault='false'/><property name='Report_ID' displayName='Report page ID' type='string' isLocalized='false' isDefault='false'/><property name='PageScripts' displayName='Disable AC scripts on pages' type='boolean' isLocalized='false' isDefault='false'/><property name='ExternalPagesID' displayName='External pages #' type='text' isLocalized='false' isDefault='false'/><property name='AllOK_No_Check' displayName='AllOK animation with no Check' type='boolean' isLocalized='false' isDefault='false'/></model><resources></resources><css></css><view></view><preview>&lt;p&gt;Worldbook Controller&lt;/p&gt;</preview><presenter>function AddonWorldbook_Controller_create(){
+
+    var presenter = function () {};
+
+    let resetPush = false;
+    let lastVisitedPageId = 0;
+    let lastVisitedPageIndex = 0;
+
+    presenter.setPlayerController = function (controller) {
+        presenter.playerController = controller;
+        presenter.eventBus = controller.getEventBus();
+        presenter.eventBus.addEventListener(&apos;ValueChanged&apos;, this);
+        presenter.eventBus.addEventListener(&apos;ShowAnswers&apos;, this);
+        presenter.eventBus.addEventListener(&apos;HideAnswers&apos;, this);
+        presenter.eventBus.addEventListener(&apos;PageLoaded&apos;, this);
+        presenter.eventBus.addEventListener(&apos;LimitedCheck&apos;, this);
+        presenter.presentation = controller.getPresentation();
+        presenter.commander = controller.getCommands();
+        presenter.currentIndex = controller.getCurrentPageIndex();
+        presenter.scoreService = controller.getScore();
+    };
+
+    presenter.run = function (view, model) {
+        console.log(&apos;Worldbook_Controller v1.0&apos;);
+        presenter.view = view;
+        presenter.model = model;
+
+        presenter.projectName = getComputedStyle(document.documentElement).getPropertyValue(&apos;--project&apos;).replace(/&apos;|&quot;/gi, &apos;&apos;).trim();
+        presenter.projectFontFamily = presenter.getProjectFontFamily();
+        presenter.footerVisability();
+
+        presenter.layout = getComputedStyle(document.documentElement).getPropertyValue(&apos;--layout&apos;).replace(/&apos;|&quot;/gi, &apos;&apos;).trim();
+        presenter.switchContrast();
+        presenter.switchLayout();
+
+        presenter.splitPageCounter();
+        presenter.addClassToPageName();
+
+        presenter.pagesIDs = [];
+        if (model[&apos;Pages_IDs&apos;]) {
+            presenter.pagesIDs = model[&apos;Pages_IDs&apos;].replaceAll(&apos; &apos;, &apos;&apos;).replaceAll(&apos;&quot;&apos;, &apos;&apos;).replaceAll(&quot;&apos;&quot;, &apos;&apos;).split(&apos;,&apos;);
+        }
+        presenter.coverIDs = [];
+        if (model[&apos;Cover_IDs&apos;]) {
+            presenter.coverIDs = model[&apos;Cover_IDs&apos;].replaceAll(&apos; &apos;, &apos;&apos;).replaceAll(&apos;&quot;&apos;, &apos;&apos;).split(&apos;,&apos;);
+        }
+        presenter.reportID = model[&apos;Report_ID&apos;];
+        presenter.localPagesIDs = presenter.collectLocalPagesIDs();
+        presenter.whiteboardFontSize = 30;
+        presenter.PageAllOkArray = [];
+        presenter.pageDone = [];
+        presenter.isAvatarReady = false;
+        presenter.showAnswerCounter = [];
+        presenter.isTextNarrationVisible = false;
+        presenter.hidePDFgotopage = ModelValidationUtils.validateBoolean(model[&apos;HidePDF&apos;]);
+        presenter.showSBWB = ModelValidationUtils.validateBoolean(model[&apos;ShowSBWB&apos;]);
+        presenter.pageScripts = ModelValidationUtils.validateBoolean(model[&apos;PageScripts&apos;]);
+        presenter.allOKNoCheck = ModelValidationUtils.validateBoolean(model[&apos;AllOK_No_Check&apos;]);
+        presenter.pageHeight = $(&apos;.ic_page&apos;).outerHeight(true);
+        presenter.isInFrame = window.parent.location != window.location;
+
+        if (presenter.model.Checks == undefined || presenter.model.Checks == &apos;&apos;) {
+            presenter.checksNumber = 5;
+        } else {
+            presenter.checksNumber = parseInt(presenter.model.Checks);
+        }
+        if (presenter.getHideShowAnswersCount() &amp;&amp; presenter.getHideShowAnswersCount() &gt; 0) {
+            presenter.checksNumber = presenter.getHideShowAnswersCount();
+        }
+        if (presenter.projectName == &apos;OnTopic&apos;) {
+            presenter.checksNumber = 1000000;
+        }
+
+        presenter.textAudioCount = presenter.getModulesCount(&apos;TextAudio&apos;);
+        presenter.textNarrationCount = presenter.getModulesCount(&apos;audio_text&apos;);
+
+        presenter.pageModules = presenter.getAllPageModules();
+        presenter.recordersCount = presenter.getRecordersCount();
+        presenter.DSBCount = presenter.getDSBCount();
+        presenter.audioCount = presenter.getAudioCount();
+        presenter.pageCounter = presenter.presentation.getPageCount();
+
+        var page = presenter.presentation.getPage(presenter.currentIndex);
+        var iframe = presenter.playerController.getModule(&apos;Iframe1&apos;);
+        if (page.isReportable() &amp;&amp; iframe != undefined) {
+            $(&apos;.ic_page&apos;).append(&apos;&lt;div class=&quot;avatar_animation_loading&quot;&gt;&lt;/div&gt;&apos;);
+        }
+
+        presenter.editableWindows = presenter.getPageModules(&apos;EditableWindow&apos;);
+        presenter.glossaryButtons = presenter.getGlossaryButtons();
+        presenter.accordionStructure = {};
+        presenter.accordionButtons = [];
+        let accordion = presenter.playerController.getModule(&apos;Accordion1&apos;);
+        if (accordion) {
+            presenter.accordionStructure = accordion.getAccordionStructure();
+            presenter.accordionButtons = Object.keys(presenter.accordionStructure);
+        }
+        presenter.currentAccordionButton = &apos;Double_State_Button1&apos;;
+        presenter.outsideAccordion = true;
+
+        // Show Gradual Answers
+        presenter.buttonSA;
+        presenter.buttonHA;
+        presenter.buttonGSA1;
+        var hideGradualPanel = presenter.playerController.getModule(&apos;Hide_Gradual_Panel&apos;);
+        var gradualPanel = presenter.playerController.getModule(&apos;Add_Gradual_Panel&apos;);
+        if (!hideGradualPanel &amp;&amp; (page.isReportable() || gradualPanel)) {
+            // presenter.addGradualAnswersPanel();
+        }
+        if (presenter.$panel) {
+            presenter.updateZoomConfiguration();
+        }
+
+        var whiteboard = presenter.playerController.getHeaderModule(&apos;whiteboard&apos;);
+        if (whiteboard) presenter.whiteboardDisplay = whiteboard.getView().style.display;
+
+        presenter.studentHideElements();
+
+        // limited panel
+        presenter.createLimitedArrays();
+        presenter.collectLimitedPanels(0);
+
+        // font-size mobile fix
+        // setTimeout(() =&gt; presenter.fontSizeMobileFix(), 0);
+
+        // external links
+        setTimeout(function () {
+            presenter.linksModel = {};
+            if (model.ExternalPages) {
+                model.ExternalPages.forEach(function(item) {
+                    presenter.linksModel[item.PageNumber] = item.LessonID;
+                });
+            }
+
+            // new approach to external links
+            if (!Object.keys(presenter.linksModel)[0].length) {
+                presenter.linksModel = {};
+                if (model.ExternalPagesID) {
+                    model.ExternalPagesID.split(&apos;\n&apos;).forEach((line) =&gt; {
+                        var el = line.trim().replaceAll(&apos; &apos;, &apos;&apos;).split(&apos;,&apos;)
+                        presenter.linksModel[el[0]] = el[1];
+                    });
+                }
+            }
+
+            var page = document.documentElement.querySelector(&apos;.ic_header&apos;);
+            var pageNumberInput = document.createElement(&apos;input&apos;);
+            pageNumberInput.className = &apos;pageNumberInput&apos;;
+            pageNumberInput.placeholder = (model.GoToPDFPlaceholder == undefined || model.GoToPDFPlaceholder == &quot;&quot;) ? &apos;Go to page&apos; : model.GoToPDFPlaceholder;
+
+            if (presenter.hidePDFgotopage == false) {
+                if (page) presenter.pageNumberInput = page.appendChild(pageNumberInput);
+            } else {
+                var btn = presenter.playerController.getHeaderModule(&apos;SSBGoToPDFPage&apos;);
+                if (btn) btn.hide();
+            }
+
+            $(presenter.pageNumberInput).on(&apos;keyup&apos;, function (e) {
+                if (e.key === &apos;Enter&apos; || e.keyCode === 13) {
+                    var val = presenter.pageNumberInput.value;
+                    if (val != &quot;&quot;/* &amp;&amp; !isNaN(val)*/) {
+                        presenter.goToPDFPage(val);
+                    }
+                }
+            });
+        }, 0);
+
+        presenter.view.addEventListener(&apos;DOMNodeRemoved&apos;, function onDOMNodeRemoved(event) {
+            if (event.target === this) {
+                presenter.destroy();
+            }
+        });
+    };
+
+    presenter.addClassToPageName = function () {
+        let $shpPageName = $(&apos;.shape_color_pagename&apos;);
+        if ($shpPageName.length) {
+            let pageNameColor = $shpPageName.attr(&apos;id&apos;).slice(9);
+            $(&apos;#Page_Name1&apos;).find(&apos;.pagename&apos;).addClass(&apos;pagename&apos; + pageNameColor);
+        }
+    };
+
+    presenter.splitPageCounter = function () {
+        let $pageCounter = $(&apos;.ic_header #Page_Counter1 .pagecounter&apos;);
+        let txt = $pageCounter.text().trim();
+        if (txt.length) {
+            txt = txt.replaceAll(&apos; &apos;, &apos;&apos;);
+            let arr = txt.split(&apos;/&apos;);
+            txt = `&lt;span class=&quot;first&quot;&gt;${arr[0]}&lt;/span&gt;&lt;span class=&quot;slash&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;last&quot;&gt;${arr[1]}&lt;/span&gt;`;
+            $pageCounter.html(txt);
+        }
+    };
+
+    presenter.getGlossaryButtons = function () {
+        let glossButtons = [];
+        let buttons = document.querySelectorAll(&apos;.Single_State_Button_Glossary_Embed&apos;);
+        buttons.forEach((item) =&gt; glossButtons.push(item.id));
+        return glossButtons;
+    };
+
+    presenter.getAccordionButtons = function () {
+        let accButtons = [];
+        let buttons = document.querySelectorAll(&apos;.Double_State_Button_Accordion&apos;);
+        buttons.forEach((item) =&gt; accButtons.push(item.id));
+        return accButtons;
+    };
+
+    presenter.headerVisability = function () {
+        let headerVisible = true;
+        if (presenter.currentIndex == 0) headerVisible = false;
+        presenter.commander.changeHeaderVisibility(headerVisible);
+    };
+
+    presenter.footerVisability = function () {
+        let footerVisible = true;
+        if (presenter.currentIndex == 0) footerVisible = false;
+        presenter.commander.changeFooterVisibility(footerVisible);
+    };
+
+    presenter.collectLocalPagesIDs = function () {
+        var model = presenter.playerController.getPresentation();
+        var pagesID = [];
+        for (var i = 0; i &lt; model.getPageCount(); i++) {
+            pagesID.push(model.getPage(i).getId());
+        }
+        return pagesID;
+    };
+
+    presenter.updateZoomConfiguration = function () {
+        presenter.zoomConfiguration.playerInitialLeftOffset = $(&quot;#_icplayer&quot;).offset().left;
+        presenter.zoomConfiguration.viewLeftOffset = presenter.$panel.offset().left;
+    };
+    presenter.zoomConfiguration = {
+        initialWindowHeight: 0,
+        initialNotScaledOffset: 0,
+        playerInitialLeftOffset: 0,
+        viewLeftOffset: 0
+    };
+    presenter.panelCoords = {
+        top: 300,
+        left: 9
+    };
+    presenter.loadWindowSize = function () {
+        presenter.zoomConfiguration.initialWindowHeight = window.iframeSize.windowInnerHeight;
+        presenter.zoomConfiguration.initialNotScaledOffset = window.iframeSize.notScaledOffset;
+        // you must repeat the data reading when they are not loaded correctly
+        if (presenter.zoomConfiguration.initialWindowHeight === 0 || isNaN(presenter.zoomConfiguration.initialNotScaledOffset)) {
+            setTimeout(function (e) {
+                presenter.loadWindowSize();
+            }, 200);
+        }
+    };
+    presenter.getZoomHeightScale = function () {
+        var initialSize = presenter.zoomConfiguration.initialWindowHeight - presenter.zoomConfiguration.initialNotScaledOffset;
+        var newSize = window.iframeSize.windowInnerHeight - presenter.zoomConfiguration.initialNotScaledOffset;
+        var zoomHeightScale = newSize / initialSize;
+        zoomHeightScale = zoomHeightScale === 0 || isNaN(zoomHeightScale) || !isFinite(zoomHeightScale) ? 1 : zoomHeightScale;
+        return zoomHeightScale
+    };
+    presenter.isOnScreen = function (element, windowElement) {
+        var zoomHeightScale = presenter.getZoomHeightScale();
+        var topWindow = $(windowElement.parent.document);
+        var coords = {
+            top: topWindow.scrollTop(),
+            left: topWindow.scrollLeft(),
+            right: topWindow.scrollLeft() + topWindow.width(),
+            bottom: topWindow.scrollTop() + topWindow.height()
+        };
+        var bounds = element.offset();
+        bounds.right = bounds.left + element.outerWidth();
+        bounds.bottom = bounds.top + element.outerHeight();
+        bounds.bottom /= zoomHeightScale;
+        return !(coords.right &lt; bounds.left || coords.left &gt; bounds.right || coords.bottom &lt; bounds.top || coords.top &gt; bounds.bottom);
+    };
+
+    function setPanelPosition() {
+        var prevPanelTop = presenter.panelCoords.top;
+        var bottom_shape = $(&apos;.ic_page .shape_left, .ic_page .shape_done, .ic_page .shape_middleLeft&apos;);
+        var min = 5;
+        var max = presenter.pageHeight - presenter.panelHeight - 5;
+        var panelTop = prevPanelTop;
+        if (bottom_shape.length == 0) {
+            if (panelTop &gt;= max) panelTop = max;
+        } else if (bottom_shape.length &gt; 0) {
+            if (panelTop + 95 &gt;= max) panelTop = max - 95;
+        }
+        presenter.$panel.css({
+            top: panelTop + &apos;px&apos;,
+            left: presenter.panelCoords.left + &apos;px&apos;
+        });
+        presenter.panelCoords = {
+            top: panelTop,
+            left: presenter.panelCoords.left
+        };
+    }
+
+    function addScrollHandler() {
+        if (!presenter.playerController || presenter.playerController.isPlayerInCrossDomain()) return;
+
+        var difference = 0;
+        var lastScrollTop = 0;
+        var panelTop = 0;
+        var min = 5;
+        var max = presenter.pageHeight - presenter.panelHeight - 5;
+        var bottom_shape = $(&apos;.ic_page .shape_left, .ic_page .shape_done, .ic_page .shape_middleLeft&apos;);
+        try {
+            $(window.parent.document).scroll(function () {
+                if (presenter.isOnScreen(presenter.$panel.parent(), window)) {
+                    var scrollTop = $(this).scrollTop(), // player top
+                        zoomHeightScale = presenter.getZoomHeightScale();
+                    difference = scrollTop - lastScrollTop;
+                    panelTop = parseInt(presenter.$panel.css(&apos;top&apos;)) + difference * zoomHeightScale;
+                    lastScrollTop = scrollTop;
+                    if (panelTop) {
+                        panelTop = panelTop &lt; min ? min : panelTop;
+                        if (bottom_shape.length == 0) {
+                            panelTop = panelTop &gt;= max ? max : panelTop;
+                        } else if (bottom_shape.length &gt; 0) {
+                            panelTop = panelTop + 95 &gt;= max ? max - 95 : panelTop;
+                        }
+                    }
+                    presenter.$panel.css({
+                        top: panelTop + &apos;px&apos;
+                    });
+                    presenter.panelCoords = {
+                        top: panelTop,
+                        left: parseInt(presenter.$panel.css(&apos;left&apos;))
+                    };
+                }
+            });
+        } catch (e) {}
+    }
+
+    presenter.getURLParams = function () {
+        var urlParams = {};
+
+        if (!presenter.playerController || presenter.playerController.isPlayerInCrossDomain()) return;
+
+        try {
+            if (window.parent) {
+                urlParams = new URLSearchParams(window.parent.location.search);
+            } else if (window.opener) {
+                urlParams = new URLSearchParams(window.opener.location.search);
+            } else {
+                urlParams = new URLSearchParams(window.location.search);
+            }
+        }  catch (e) {}
+
+        return urlParams;      
+    };
+
+    presenter.getLayoutContext = function () {
+        var urlParams = presenter.getURLParams();
+        if (urlParams &amp;&amp; urlParams.get(&apos;mobile&apos;) != null) {
+            return true;
+        } else {
+            return false;
+        }        
+    };
+
+    presenter.switchLayout = function () {
+        var layoutContext = presenter.getLayoutContext();
+        let layoutName = presenter.getProjectLayoutName();
+        if (layoutContext != undefined) {
+            if (layoutContext == true) {
+                presenter.playerController.changeSemiResponsiveLayout(layoutName[&apos;mobile&apos;]);
+            }
+        }
+    };
+
+    presenter.getContrastContext = function () {
+        var context = presenter.playerController.getContextMetadata();
+        if (context != null) {
+            if (context.isDarkModeEnabled) return context.isDarkModeEnabled;
+        }
+        var urlParams = presenter.getURLParams();
+        if (urlParams &amp;&amp; (urlParams.get(&apos;dark&apos;) != null || urlParams.get(&apos;dark&apos;) == &apos;true&apos;)) {
+            return true;
+        } else {
+            return false;
+        }        
+    };
+
+    presenter.switchContrast = function () {
+        var contrastContext = presenter.getContrastContext();
+        if (contrastContext != undefined) {
+            if (contrastContext == true) {
+                $(&apos;.ic_page&apos;).addClass(&apos;highContrast&apos;);
+                $(&apos;.ic_header&apos;).addClass(&apos;highContrast&apos;);
+                setTimeout(() =&gt; $(&apos;.ic_footer&apos;).addClass(&apos;highContrast&apos;), 0);
+            } else {
+                $(&apos;.ic_page&apos;).removeClass(&apos;highContrast&apos;);
+                $(&apos;.ic_header&apos;).removeClass(&apos;highContrast&apos;);
+                setTimeout(() =&gt; $(&apos;.ic_footer&apos;).removeClass(&apos;highContrast&apos;), 0);
+            }
+        }
+    };
+
+    presenter.getTeacherContext = function() {
+        var context = presenter.playerController.getContextMetadata();
+        if (context != null) {
+            if (context.isSchoolTeacher) return context.isSchoolTeacher;
+        }
+        var urlParams = presenter.getURLParams();
+        if (urlParams &amp;&amp; ((urlParams.get(&apos;teacher&apos;) != null &amp;&amp; urlParams.get(&apos;teacher&apos;) != &apos;false&apos;) || urlParams.get(&apos;isSchoolTeacher&apos;) == &apos;true&apos; || urlParams.get(&apos;teacher&apos;) == &apos;true&apos;)) {
+            return true;
+        } else {
+            return false;
+        }
+    };
+
+    presenter.studentHideElements = function () {
+        var teacherContext = presenter.getTeacherContext();
+
+        if (teacherContext != null) {
+            var whiteboard = presenter.playerController.getHeaderModule(&apos;whiteboard&apos;);
+            if (teacherContext == false) {      // STUDENT
+                presenter.hideModules(&apos;ShowModelAnswer&apos;);
+
+                if (presenter.pageScripts) presenter.hideModules(&apos;Show_Example_Answer&apos;);
+                if (presenter.pageScripts) {
+                    if (presenter.projectName != &apos;Formula&apos;) {
+                        presenter.hideModules(&apos;Example_Text&apos;);
+                    } else {
+                        var page = presenter.playerController.getPresentation().getPage(presenter.currentIndex);
+                        if (page.isReportable()) {
+                            presenter.hideModules(&apos;Example_Text&apos;);
+                            presenter.deselectModules(&apos;Show_Example_Answer&apos;);
+                        }
+                    }
+                }
+                var resources = presenter.playerController.getHeaderModule(&apos;resources&apos;);
+                var crossLesson = presenter.playerController.getHeaderModule(&apos;lesson&apos;);
+                var iwb = presenter.playerController.getModule(&apos;IWB_Toolbar1&apos;);
+                var btn = presenter.playerController.getHeaderModule(&apos;Cross_Lesson1&apos;);
+                var dsb = presenter.playerController.getModule(&apos;DSB_ShowNoGaps&apos;);
+                if (iwb) iwb.hide();
+                if (whiteboard) whiteboard.hide();
+                if (resources) resources.hide();
+                if (crossLesson &amp;&amp; !presenter.showSBWB) crossLesson.hide();
+                if (btn) btn.hide();
+                if (dsb) dsb.hide();
+                $(&apos;.Double_State_Button_TeachersNote&apos;).hide();
+            } else {                            // TEACHER
+                presenter.showModules(&apos;ShowModelAnswer&apos;);
+                presenter.showModulesNoEnable(&apos;Limited_Show_Answers&apos;);
+                presenter.showModulesNoEnable(&apos;Gradual_Show_Answer&apos;);
+                if (whiteboard) {
+                    if (presenter.whiteboardDisplay != &apos;none&apos;) whiteboard.getView().style.display = &apos;&apos;;
+                }
+            }
+        }
+    };
+
+    presenter.showAltAnswers = function () {
+        presenter.showModules(&apos;Show_Alt_Answers&apos;);
+        presenter.hideModules(&apos;Hide_Alt_Answers&apos;);
+        presenter.hideModules(&apos;Alt_Answers_Text&apos;);
+    };
+    presenter.hideAltAnswers = function () {
+        presenter.hideModules(&apos;Show_Alt_Answers&apos;);
+        presenter.hideModules(&apos;Hide_Alt_Answers&apos;);
+        presenter.hideModules(&apos;Alt_Answers_Text&apos;);
+    };
+
+    function stopEvent(event) {
+        if (event.cancelable) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }
+    presenter.addGradualAnswersPanel = function () {
+        var panel = presenter.addOuterDIV();
+        presenter.addSA(panel);
+        presenter.addHA(panel);
+        presenter.addGradualSA1(panel);
+        presenter.addGradualHA(panel);
+        presenter.dragElement(panel);
+        presenter.$panel = $(panel);
+        presenter.panelHeight = presenter.$panel.outerHeight(true);
+        if (presenter.isInFrame) {
+            addScrollHandler();
+            setPanelPosition();
+        }
+    };
+    presenter.addOuterDIV = function () {
+        var page = document.documentElement.querySelector(&apos;.ic_page&apos;);
+        var panel = document.createElement(&apos;div&apos;);
+        panel.id = &apos;Gradual_Drag_Panel&apos;;
+        panel.className = &apos;drag_panel2&apos;;
+        panel = page.appendChild(panel);
+        // TEACHER CONTEXT = first create panel, then hide it for students
+        var teacherContext = presenter.getTeacherContext();
+        if (teacherContext != undefined) {
+            if (teacherContext == false) {
+                panel.style.display = &apos;none&apos;;
+            }
+        }
+        return panel;
+    };
+    presenter.addSA = function (panel) {
+        presenter.buttonSA = document.createElement(&apos;button&apos;);
+        presenter.buttonSA.id = &apos;Show_Answers2&apos;;
+        presenter.buttonSA.className = &apos;show_answers_free2&apos;;
+        presenter.buttonSA.style.display = &apos;block&apos;;
+        $(presenter.buttonSA).on(&apos;click touchend&apos;, function (event) {
+            stopEvent(event);
+            presenter.commander.hideGradualAnswers();
+            presenter.commander.showAnswers();
+            presenter.buttonHA.style.display = &apos;block&apos;;
+            presenter.buttonSA.style.display = &apos;none&apos;;
+            presenter.buttonGSA1.className = &apos;gradual-show-answers-button1&apos;;
+            // presenter.showAltAnswers();
+        });
+        panel.appendChild(presenter.buttonSA);
+    };
+    presenter.addHA = function (panel) {
+        presenter.buttonHA = document.createElement(&apos;button&apos;);
+        presenter.buttonHA.id = &apos;Hide_Answers2&apos;;
+        presenter.buttonHA.className = &apos;hide_answers_free2&apos;;
+        presenter.buttonHA.style.display = &apos;none&apos;;
+        $(presenter.buttonHA).on(&apos;click touchend&apos;, function (event) {
+            stopEvent(event);
+            presenter.commander.hideAnswers();
+            presenter.buttonSA.style.display = &apos;block&apos;;
+            presenter.buttonHA.style.display = &apos;none&apos;;
+            presenter.buttonGSA1.className = &apos;gradual-show-answers-button1&apos;;
+            // presenter.hideAltAnswers();
+        });
+        panel.appendChild(presenter.buttonHA);
+    };
+    presenter.addGradualSA1 = function (panel) {
+        presenter.buttonGSA1 = document.createElement(&apos;button&apos;);
+        presenter.buttonGSA1.id = &apos;Gradual_Show_Answers1&apos;;
+        presenter.buttonGSA1.className = &apos;gradual-show-answers-button1&apos;;
+        $(presenter.buttonGSA1).on(&apos;click touchend&apos;, function (event) {
+            stopEvent(event); 
+            presenter.buttonGSA1.className = &apos;gradual-show-answers-button2&apos;;
+            paragraphCheck();
+            // presenter.showAltAnswers();
+            var tabs = presenter.playerController.getModule(&apos;Tabs1&apos;);
+            if (tabs) tabs.enable();
+        });
+        panel.appendChild(presenter.buttonGSA1);
+    };
+    function paragraphCheck () {
+        try { 
+            presenter.commander.showNextAnswer();
+        } catch (error) {
+            window.onerror = function () {
+                return true;
+            }
+            console.log(&quot;err&quot;);
+            presenter.commander.showNextAnswer();
+            // expected output: ReferenceError: nonExistentFunction is not defined
+            // Note - error messages will vary depending on browser
+        }
+        if (document.querySelector(&apos;.paragraph-wrapper&apos;)) {
+            document.querySelectorAll(&apos;.paragraph-wrapper&apos;).forEach((el) =&gt; {
+                if (el) el.classList.remove(&quot;disabled&quot;);
+            });
+        }
+    }
+    presenter.addGradualHA = function (panel) {
+        var buttonSA = document.createElement(&apos;button&apos;);
+        buttonSA.id = &apos;Gradual_Hide_Answers2&apos;;
+        buttonSA.className = &apos;gradual-hide-answers-button&apos;;
+        $(buttonSA).on(&apos;click touchend&apos;, function (event) {
+            stopEvent(event);
+            presenter.commander.hideGradualAnswers();
+            presenter.commander.hideAnswers();
+            presenter.buttonSA.style.display = &apos;block&apos;;
+            presenter.buttonHA.style.display = &apos;none&apos;;
+            presenter.buttonGSA1.className = &apos;gradual-show-answers-button1&apos;;
+            document.querySelectorAll(&quot;.ui-sortable&quot;).forEach((el) =&gt; {
+                el.classList.remove(&quot;ui-sortable-disabled&quot;);
+            });
+            // presenter.hideAltAnswers();
+        });
+        panel.appendChild(buttonSA);
+    };
+    presenter.dragElement = function (elmnt) {
+        var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        var dragElem = document.getElementById(&apos;Gradual_Drag_Panel&apos;);
+        var icPage = document.getElementsByClassName(&apos;ic_page&apos;);
+        var clientWidth = icPage[0].clientWidth;
+        var clientHeight = icPage[0].clientHeight;
+        if (dragElem) {
+            dragElem.onmousedown = dragMouseDown;
+            dragElem.ontouchstart = dragMouseDown;
+        }
+        function dragMouseDown(e) {
+            e = e || window.event;
+            e.preventDefault();
+            var scaleInfo = presenter.playerController.getScaleInformation();
+            if (e.type == &apos;mousedown&apos;) {            // get the mouse cursor position at startup
+                pos3 = e.clientX / scaleInfo.scaleX;
+                pos4 = e.clientY / scaleInfo.scaleY;
+            } else {
+                pos3 = e.touches[0].clientX / scaleInfo.scaleX;
+                pos4 = e.touches[0].clientY / scaleInfo.scaleY;
+            }
+            document.onmouseup = closeDragElement;
+            document.ontouchend = closeDragElement;
+            document.onmousemove = elementDrag;     // call a function whenever the cursor moves
+            document.ontouchmove = elementDrag;
+        }
+        function elementDrag(e) {
+            e = e || window.event;
+            e.preventDefault();
+            let scaleInfo = presenter.playerController.getScaleInformation();
+            let X = e.clientX;
+            let Y = e.clientY;
+            if (e.type == &apos;mousemove&apos;) {            // calculate the new cursor position
+                pos1 = pos3 - X / scaleInfo.scaleX;
+                pos2 = pos4 - Y / scaleInfo.scaleY;
+                pos3 = X / scaleInfo.scaleX;
+                pos4 = Y / scaleInfo.scaleY;
+            } else {
+                pos1 = pos3 - e.touches[0].clientX / scaleInfo.scaleX;
+                pos2 = pos4 - e.touches[0].clientY / scaleInfo.scaleY;
+                pos3 = e.touches[0].clientX / scaleInfo.scaleX;
+                pos4 = e.touches[0].clientY / scaleInfo.scaleY;
+            }
+            X = dragElem.offsetLeft - pos1;
+            Y = dragElem.offsetTop - pos2;
+            X = X &lt;= 5 ? 5 : X;
+            Y = Y &lt;= 5 ? 5 : Y;
+            X = X &gt;= clientWidth - dragElem.offsetWidth - 5 ? clientWidth - dragElem.offsetWidth - 5 : X;
+            Y = Y &gt;= clientHeight - dragElem.offsetHeight - 5 ? clientHeight - dragElem.offsetHeight - 5 : Y;
+            presenter.$panel.css({
+                &apos;top&apos;: Y + &apos;px&apos;,
+                &apos;left&apos;: X + &apos;px&apos;
+            });
+            presenter.panelCoords = {   // set the element&apos;s new position
+                top: parseInt(presenter.$panel.css(&apos;top&apos;)),
+                left: parseInt(presenter.$panel.css(&apos;left&apos;))
+            };
+            dragElem.style.opacity = 0.6;
+        }
+        function closeDragElement() {   // stop moving when mouse button is released
+            document.onmouseup = null;
+            document.ontouchend = null;
+            document.onmousemove = null;
+            document.ontouchmove = null;
+            dragElem.style.opacity = 1.0;
+        }
+    };
+
+    presenter.avatarReady = function () {
+        var iframe = presenter.playerController.getModule(&apos;Iframe1&apos;);
+        if (!iframe) return;
+
+        var stage = $(iframe.getView()).find(&apos;iframe&apos;).get(0).contentWindow.stage;
+        presenter.avatarsID = stage.children[0].children.length;
+        for (var i = 1; i &lt;= presenter.avatarsID; i++) {
+            stage.children[0][&apos;anim&apos; + i].alpha = 0;
+        }
+        presenter.isAvatarReady = true;
+        if (presenter.response != &apos;&apos;) {
+            presenter.respond(presenter.response);
+        }
+        var loadingScreen = $(&apos;.avatar_animation_loading&apos;);
+        if (loadingScreen.hasOwnProperty(0)) {
+            $(loadingScreen.get(0)).remove();
+        }
+    };
+
+    // === HELPERS ===
+    presenter.getPageModules = function (moduleName) {
+        var allModules = presenter.presentation.getPage(presenter.currentIndex).getModulesAsJS();
+        return allModules.filter((mod) =&gt; mod.indexOf(moduleName) == 0);
+    };
+    presenter.getModulesCount = function (moduleName) {
+        return presenter.getPageModules(moduleName).length;
+    };
+    presenter.deselectModules = function (moduleName) {
+        var modules = presenter.getPageModules(moduleName);
+        for (var modul of modules) {
+            var el = presenter.playerController.getModule(modul);
+            if (el) el.deselect();
+        }
+    };
+    presenter.hideModules = function (moduleName) {
+        var modules = presenter.getPageModules(moduleName);
+        for (var modul of modules) {
+            var el = presenter.playerController.getModule(modul);
+            if (el) el.hide();
+        }
+    };
+    presenter.showModules = function (moduleName) {
+        var modules = presenter.getPageModules(moduleName);
+        for (var modul of modules) {
+            var el = presenter.playerController.getModule(modul);
+            if (el) {
+                el.show();
+                el.enable();
+            }
+        }
+    };
+    presenter.showModulesNoEnable = function (moduleName) {
+        var modules = presenter.getPageModules(moduleName);
+        for (var modul of modules) {
+            var el = presenter.playerController.getModule(modul);
+            if (el) el.show();
+        }
+    };
+
+    // === HELPERS for Audio and Media_Recorder
+    presenter.getAllPageModules = function () {
+        return presenter.presentation.getPage(presenter.currentIndex).getModulesAsJS();
+    };
+    presenter.getAudioCount = function () {
+        return presenter.pageModules.filter((module) =&gt; module.indexOf(&apos;Audio&apos;) == 0).length;
+    };
+    presenter.getDSBCount = function() {
+        return presenter.pageModules.filter((modul) =&gt; {
+            if (modul.indexOf(&apos;Double_State_Button&apos;) == 0) {
+                var btn = presenter.playerController.getModule(modul);
+                if (btn) {
+                    var button = $(btn.getView()).hasClass(&apos;Double_State_Button_Audio_Icon&apos;);
+                    return button;
+                } else {
+                    return false;
+                }
+            }
+        }).length;
+    };
+    presenter.getRecordersCount = function () {
+        return presenter.pageModules.filter((module) =&gt; module.indexOf(&apos;Media_Recorder&apos;) == 0).length;
+    };
+    presenter.handleDSButtons = function (butNr, handle) {
+        var multiAudio = presenter.playerController.getModule(&apos;MultiAudio1&apos;);
+        if (multiAudio) multiAudio.stop();
+        if (multiAudio &amp;&amp; butNr !== 0) multiAudio.play();
+        
+        for (var i = 1; i &lt; presenter.DSBCount + 1; i++) {
+            var button = presenter.playerController.getModule(&apos;Double_State_Button&apos; + i);
+            if (button &amp;&amp; butNr != i) {
+                if ($(button.getView()).hasClass(&apos;Double_State_Button_Audio_Icon&apos;)) {
+                    switch (handle) {
+                        case &apos;deselect&apos;:
+                            button.deselect();
+                            break;
+                        case &apos;disable&apos;:
+                            button.disable();
+                            break;
+                        case &apos;enable&apos;:
+                            button.enable();
+                            break;
+                    }
+                }
+            }
+        }
+    };
+    presenter.stopTextAudio = function (audioNr) {
+        for (var i = 1; i &lt; presenter.textAudioCount + 1; i++) {
+            if (audioNr != i) {
+                var textAudio = presenter.playerController.getModule(&apos;TextAudio&apos; + i);
+                if (textAudio) textAudio.stop();
+            }
+        }
+    };
+    presenter.stopAudioText = function (audioNr) {
+        for (var i = 1; i &lt; presenter.textNarrationCount + 1; i++) {
+            if (audioNr != i) {
+                var audioText = presenter.playerController.getModule(&apos;audio_text&apos; + i);
+                if (audioText) audioText.stop();
+            }
+        }
+    };
+    presenter.stopRecorders = function (recNr) {
+        for (var i = 1; i &lt; presenter.recordersCount + 1; i++) {
+            if (recNr != i) {
+                var mrec = presenter.playerController.getModule(&apos;Media_Recorder&apos; + i);
+                if (mrec) {
+                    mrec.stopPlaying();
+                    mrec.stopRecording();
+                    // mrec.setShowErrorsMode();
+                }
+            }
+        }
+    };
+    presenter.stopAudio = function (audioNr) {
+        for (var i = 1; i &lt; presenter.audioCount + 1; i++) {
+            if (audioNr != i) {
+                var audio = presenter.playerController.getModule(&apos;Audio&apos; + i);
+                if (audio) audio.stop();
+            }
+        }
+    };
+
+    // === HELPERS for context metadata
+    presenter.getHideShowAnswersContext = function () {
+        var contextMetadata = presenter.playerController.getContextMetadata();
+        if (contextMetadata) {
+            return contextMetadata.hideShowAnswers;
+        }
+    };
+    presenter.getHideShowAnswersOption = function () {
+        var contextMetadata = presenter.playerController.getContextMetadata();
+        if (contextMetadata) {
+            return contextMetadata.hideShowAnswersOption;
+        }
+    };
+    presenter.getHideShowAnswersCount = function () {
+        var contextMetadata = presenter.playerController.getContextMetadata();
+        if (contextMetadata &amp;&amp; contextMetadata.hideShowAnswersOption == 2) {
+            return contextMetadata.showAnswersCheckCount;
+        } else {
+            return null;
+        }
+    };
+
+    presenter.showSA = function () {
+        var pageIndex = parseInt(presenter.currentIndex, 10) + 1;
+        var SA = presenter.playerController.getModule(&apos;Show_Answers1&apos;);
+        var pageProgress = presenter.playerController.getModule(&apos;Page_Progress_Panel1&apos;);
+        if (pageProgress != null) {
+            $(pageProgress.getView()).addClass(&quot;Page_Progress_Panel_SA&quot;);
+        }
+        if (SA != undefined) {
+            presenter.showAnswerCounter[pageIndex] = true;
+            SA.show();
+        }
+        var Check_Button1 = presenter.playerController.getModule(&apos;Check_Button1&apos;);
+        if (Check_Button1 != undefined) {
+            $(Check_Button1.getView()).addClass(&apos;button_check_SA&apos;);
+        }
+        var Reset1 = presenter.playerController.getModule(&apos;Reset1&apos;);
+        if (Reset1 != undefined) {
+            $(Reset1.getView()).addClass(&apos;Reset_Button_SA&apos;);
+        }
+    };
+
+    presenter.removeANBHeaderBookmark = function () {
+        let ANB = presenter.playerController.getHeaderModule(&apos;Assessments_Navigation_Bar1&apos;);
+        if (ANB) ANB.removeBookmark();
+
+        ANB = presenter.playerController.getFooterModule(&apos;Assessments_Navigation_Bar1&apos;);
+        if (ANB) ANB.removeBookmark();
+    };
+    presenter.addANBHeaderBookmark = function () {
+        let ANB = presenter.playerController.getHeaderModule(&apos;Assessments_Navigation_Bar1&apos;);
+        if (ANB) ANB.bookmarkCurrentPage();
+
+        ANB = presenter.playerController.getFooterModule(&apos;Assessments_Navigation_Bar1&apos;);
+        if (ANB) ANB.bookmarkCurrentPage();
+    };
+
+    // limited panel
+    presenter.createLimitedArrays = function () {
+        presenter.limitedCheckCount = [];
+        presenter.mainCheckCounter = [];
+    };
+    presenter.collectLimitedPanels = function (noReset) {
+        let pageIdx = parseInt(presenter.currentIndex);
+        let isReportable = presenter.presentation.getPage(pageIdx).isReportable();
+        if (!isReportable) return;
+
+        let modulesList = presenter.presentation.getPage(pageIdx).getModulesAsJS();
+        let tLGSA = modulesList.filter(m =&gt; m.indexOf(&apos;Gradual_Show_Answer&apos;) &gt; -1);
+        let tLSA = modulesList.filter(m =&gt; m.indexOf(&apos;Limited_Show_Answers&apos;) &gt; -1);
+        let tLC = modulesList.filter(m =&gt; m.indexOf(&apos;Limited_Check&apos;) &gt; -1);
+
+        if (tLGSA.length == 0 || tLSA.length == 0 || tLC.length == 0) return;
+
+        // modules top
+        let moduleY = [];
+        for (let tm of tLGSA) {
+            let m = presenter.playerController.getModule(tm);
+            if (m) moduleY.push(parseInt(m.getView().style.top));
+        }
+
+        presenter.panelGSA = new Array(moduleY.length);
+        for (let i = 0; i &lt; moduleY.length; i++) {
+            presenter.panelGSA[i] = [];
+            // LGSA
+            presenter.panelGSA[i].push(tLGSA[i]);
+            // LSA
+            for (let k = 0; k &lt; tLSA.length; k++) {
+                let m = parseInt(presenter.playerController.getModule(tLSA[k]).getView().style.top);
+                if (m &amp;&amp; Math.abs(m - moduleY[i]) &lt; 10) {
+                    presenter.panelGSA[i].push(tLSA[k]);
+                    break;
+                }
+            }
+            // LC
+            for (let k = 0; k &lt; tLC.length; k++) {
+                let m = parseInt(presenter.playerController.getModule(tLC[k]).getView().style.top);
+                if (m &amp;&amp; Math.abs(m - moduleY[i]) &lt; 10) {
+                    presenter.panelGSA[i].push(tLC[k]);
+                    break;
+                }
+            }
+        }
+
+        var teacherContext = presenter.getTeacherContext();
+        if (teacherContext != undefined) {
+            if (teacherContext == false) {
+                for (let m of tLGSA) {
+                    var modul = presenter.playerController.getModule(m);
+                    if (modul) {
+                        modul.hide();
+                    } else {
+                        modul.show();
+                    }
+                }
+                for (let m of tLSA) {
+                    if (!noReset) {
+                        var modul = presenter.playerController.getModule(m);
+                        if (modul) {
+                            modul.hide();
+                        } else {
+                            modul.show();
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    presenter.hideTextAudioTexts = function (name) {
+        var moduleNames = presenter.getPageModules(name);
+        for (var modul of moduleNames) {
+            var TA = presenter.playerController.getModule(modul);
+            if (TA) {
+                var el = TA.getView().querySelector(&apos;.textaudio-text&apos;);
+                if (el) $(el).css({visibility: &apos;hidden&apos;, height: &apos;0&apos;, margin: &apos;0&apos;, padding: &apos;0&apos;});
+            }
+        }
+    };
+
+    presenter.getProjectFontFamily = function () {
+        var fontFamily = &apos;Arial&apos;;
+        switch (presenter.projectName) {
+            case &apos;Roadmap&apos;:
+                fontFamily = &apos;SohoGothic&apos;;
+                break;
+            case &apos;GoGetter&apos;:
+            case &apos;GoldExperience&apos;:
+                fontFamily = &apos;Camphor&apos;;
+                break;
+            case &apos;WiderWorld&apos;:
+            case &apos;Speakout&apos;:
+                fontFamily = &apos;Frutiger&apos;;
+                break;
+            case &apos;Focus&apos;:
+            case &apos;Formula&apos;:
+            case &apos;StepUp&apos;:
+            case &apos;StartUp&apos;:
+                fontFamily = &apos;Avenir&apos;;
+                break;
+            case &apos;CareerSuccess&apos;:
+                fontFamily = &apos;Global&apos;;
+                break;
+            case &apos;Future&apos;:
+                fontFamily = &apos;HelveticaNeue&apos;;
+                break;
+        }
+        return fontFamily;
+    };
+
+    presenter.getProjectLayoutName = function () {
+        const DEFAULT_LAYOUT_NAMES = {&apos;desktop&apos;: &apos;desktop&apos;, &apos;mobile&apos;: &apos;Mobile&apos;};
+        const LAYOUT_NAMES = {
+            &apos;RiseAndShine&apos;: {&apos;desktop&apos;: &apos;default&apos;, &apos;mobile&apos;: &apos;mobile&apos;},
+            &apos;TestPrimary&apos;: {&apos;desktop&apos;: &apos;default&apos;, &apos;mobile&apos;: &apos;Mobile&apos;},
+            &apos;TestSecondary&apos;: {&apos;desktop&apos;: &apos;default&apos;, &apos;mobile&apos;: &apos;Mobile&apos;},
+        };
+        if (LAYOUT_NAMES[presenter.project]) {
+            return LAYOUT_NAMES[presenter.project];
+        } else {
+            return DEFAULT_LAYOUT_NAMES;
+        }
+    };
+
+    // === EVENTS ===
+    presenter.onEventReceived = function (eventName, eventData) {
+        // console.log(&apos;event name: &apos; + eventName + &apos;\nevent source: &apos; + eventData.source + &apos;\nevent value: &apos; + eventData.value + &apos;\nevent item: &apos; + eventData.item);
+
+        if (eventData.source == undefined) return;
+
+        // determine if glossary button is pressed outside accordion
+        if (presenter.glossaryButtons.indexOf(eventData.source) &gt;= 0) {
+            presenter.outsideAccordion = false;
+            let found = false;
+            for (let item of presenter.accordionButtons) {
+                if (presenter.accordionStructure[item].indexOf(eventData.source) &gt;= 0) {
+                    found = true;
+                    presenter.currentAccordionButton = item;
+                    break;
+                }
+            }
+            if (!found) presenter.outsideAccordion = true;
+        }
+
+        // mutual hide of EditableWindows
+        if (eventData.source.indexOf(&apos;EditableWindow&apos;) == 0) {
+            for (let item of presenter.editableWindows) {
+                if (item != eventData.source &amp;&amp; eventData.value == &apos;move-editable-windows&apos;) {
+                    presenter.playerController.getModule(item).hide();
+                }
+            }
+        }
+
+        // hide EditableWindows when accordion button pressed
+        if (presenter.accordionButtons.indexOf(eventData.source) &gt;= 0) {
+            let accButton = presenter.playerController.getModule(eventData.source);
+            if (eventData.value == &apos;1&apos;) {
+                for (let item of presenter.editableWindows) {
+                    if (!presenter.outsideAccordion &amp;&amp; presenter.currentAccordionButton != eventData.source) {
+                        presenter.playerController.getModule(item).hide();
+                    }
+                }
+                presenter.currentAccordionButton = eventData.source;
+            }
+        }
+
+        // === Remove Inline CSS in dark mode
+        if (eventName == &quot;PageLoaded&quot; &amp;&amp; (eventData.source.indexOf(&apos;footer&apos;) == 0 || eventData.source.indexOf(&apos;header&apos;) == 0)) {
+            if ($(&apos;.ic_page&apos;).hasClass(&apos;highContrast&apos;)) {
+                let icPage = document.querySelector(&apos;.ic_page&apos;);
+                let icHeader = document.querySelector(&apos;.ic_header&apos;);
+                let icFooter = document.querySelector(&apos;.ic_footer&apos;);
+                const removeAttributes = (element) =&gt; {
+                    for (let child of element.children) {
+                        if (child.style.color) child.style.color = &apos;&apos;;
+                        if (child.style.background) child.style.background = &apos;&apos;;
+                        if (child.style.backgroundColor) child.style.backgroundColor = &apos;&apos;;
+                        if (child.style.border) child.style.border = &apos;&apos;;
+                        if (child.style.borderColor) child.style.borderColor = &apos;&apos;;
+                        if (child.style.font) child.style.font = &apos;&apos;;
+                        if (child.style.boxShadow) child.style.boxShadow = &apos;&apos;;
+                        let span = child.querySelectorAll(&apos;span&apos;);
+                        if (span.length) {
+                            for (let el of span) {
+                                if (el.style.color) el.style.color = &apos;&apos;;
+                            }
+                        }
+                        let font = child.querySelectorAll(&apos;font&apos;);
+                        if (font.length) {
+                            for (let el of font) {
+                                el.removeAttribute(&apos;color&apos;);
+                            }
+                        }
+                        let td = child.querySelectorAll(&apos;td&apos;);
+                        if (td.length) {
+                            for (let el of td) {
+                                if (el.style.background) el.style.background = &apos;&apos;;
+                                if (el.style.backgroundColor) el.style.backgroundColor = &apos;&apos;;
+                            }
+                        }
+                        // let img = child.querySelectorAll(&apos;img&apos;);
+                        // for (let el of img) {
+                        //     el.style.filter = &apos;grayscale(1)&apos;;
+                        //     el.parentElement.style.filter = &apos;grayscale(1)&apos;;
+                        // }
+                        if (child.id.indexOf(&apos;Example_Text&apos;) == 0 || child.id.indexOf(&apos;ModelText&apos;) == 0) {
+                            if (child.classList.length == 1 &amp;&amp; child.classList[0] == &apos;ic_text&apos;) child.classList.add(&apos;Paragraph_Text_Dark&apos;);
+                        }
+                    }
+                };
+                if (icPage) removeAttributes(icPage);
+                if (icHeader) removeAttributes(icHeader);
+                if (icFooter) removeAttributes(icFooter);
+            }
+        }
+
+        // === ChangeLayout ===
+        if (eventData.source.indexOf(&apos;ChangeLayout&apos;) == 0) {
+            let layoutName = presenter.getProjectLayoutName();
+            if (eventData.value == &apos;1&apos;) {
+                presenter.playerController.changeSemiResponsiveLayout(layoutName[&apos;mobile&apos;]);
+            } else {
+                presenter.playerController.changeSemiResponsiveLayout(layoutName[&apos;desktop&apos;]);
+            }
+        }
+
+        // === Show Alt Answers
+        if (eventData.source.indexOf(&apos;Show_Alt_Answers&apos;) == 0) {
+            var id = eventData.source.slice(16);
+            var AAT = presenter.playerController.getModule(&apos;Alt_Answers_Text&apos; + id);
+            if (AAT) AAT.show();
+            var SAA = presenter.playerController.getModule(&apos;Show_Alt_Answers&apos; + id);
+            if (SAA) {
+                SAA.hide();
+                SAA.enable();
+            }
+            var HAA = presenter.playerController.getModule(&apos;Hide_Alt_Answers&apos; + id);
+            if (HAA) {
+                HAA.show();
+                HAA.enable();
+            }
+        }
+
+        // === Hide Alt Answers
+        if (eventData.source.indexOf(&apos;Hide_Alt_Answers&apos;) == 0) {
+            var id = eventData.source.slice(16);
+            var AAT = presenter.playerController.getModule(&apos;Alt_Answers_Text&apos; + id);
+            if (AAT) AAT.hide();
+            var SAA = presenter.playerController.getModule(&apos;Show_Alt_Answers&apos; + id);
+            if (SAA) {
+                SAA.show();
+                SAA.enable();
+            }
+            var HAA = presenter.playerController.getModule(&apos;Hide_Alt_Answers&apos; + id);
+            if (HAA) {
+                HAA.hide();
+                HAA.enable();
+            }
+        }
+
+        // === EditableWindow ===
+        if (eventData.source.indexOf(&apos;EditableWindow&apos;) &gt;= 0) {
+            var len = presenter.getModulesCount(&apos;EditableWindow&apos;);
+            var ewIsVisible = false;
+            for (var i = 1; i &lt;= len; i++) {
+                var ew = presenter.playerController.getModule(&apos;EditableWindow&apos; + i);
+                if (ew) {
+                    ew.getView().style.zIndex = &apos;105&apos;;
+                    if (ew.isVisible()) {
+                        ewIsVisible = true;
+                    }
+                }
+            }
+            var iwb = presenter.playerController.getModule(&apos;IWB_Toolbar1&apos;);
+            if (eventData.value == &apos;move-editable-windows&apos;) {
+                if (iwb) iwb.hide();
+            } else if (eventData.value == &apos;close&apos; &amp;&amp; !ewIsVisible) {
+                var teacherContext = presenter.getTeacherContext();
+                if (teacherContext != undefined) {
+                    if (teacherContext) {
+                        if (iwb) iwb.show();
+                    }
+                }
+            }
+        }
+        if (eventName == &quot;PageLoaded&quot; &amp;&amp; eventData.source != &apos;header&apos; &amp;&amp; eventData.source != &apos;footer&apos;) {
+            var iwb = presenter.playerController.getModule(&apos;IWB_Toolbar1&apos;);
+            var teacherContext = presenter.getTeacherContext();
+            if (teacherContext != undefined) {
+                if (teacherContext) {
+                    if (iwb) iwb.show();
+                }
+            }
+        }
+
+        // === limited panel ===
+        if (eventName == &apos;LimitedCheck&apos; &amp;&amp; eventData.value != &apos;unchecked&apos;) {
+            let id = parseInt(eventData.source.slice(13));
+            let pageIndex = parseInt(presenter.currentIndex);
+            presenter.collectLimitedPanels(1);
+            let len = presenter.panelGSA.length;
+            for (let i = 0; i &lt; len; i++) {
+                if (presenter.panelGSA[i].includes(eventData.source)) {
+                    id = i;
+                    break;
+                }
+            }
+            if (!presenter.limitedCheckCount[pageIndex]) {
+                presenter.limitedCheckCount[pageIndex] = [];
+            }
+            if (presenter.limitedCheckCount[pageIndex][id]) {
+                presenter.limitedCheckCount[pageIndex][id] += 1;
+            } else {
+                presenter.limitedCheckCount[pageIndex][id] = 1;
+            }
+            if (presenter.limitedCheckCount[pageIndex][id] &gt;= presenter.checksNumber) {
+                presenter.playerController.getModule(presenter.panelGSA[id][1]).show();
+            }
+        }
+
+        if (eventData.source.indexOf(&apos;Limited_Reset&apos;) == 0) {
+            presenter.studentHideElements();
+        }
+
+        // === GoToPDFPage ===
+        if (eventData.source == &apos;SSBGoToPDFPage&apos;) {
+            var val = presenter.pageNumberInput.value;
+            if (val != &quot;&quot;/* &amp;&amp; !isNaN(val)*/) {
+                presenter.goToPDFPage(val);
+            }
+        }
+
+        // === Whiteboard ===
+        if (eventData.source.indexOf(&apos;UploadImage&apos;) &gt;= 0) {
+            presenter.playerController.getModule(&apos;Drawing1&apos;).uploadImage();
+        }
+        if (eventData.source.indexOf(&apos;DownloadBoard&apos;) &gt;= 0) {
+            presenter.playerController.getModule(&apos;Drawing1&apos;).downloadBoard();
+        }
+        if (eventData.source.indexOf(&apos;AddText&apos;) &gt;= 0) {
+            var Drawing1 = presenter.playerController.getModule(&apos;Drawing1&apos;);
+            Drawing1.setFont(`${presenter.whiteboardFontSize}px ${presenter.projectFontFamily}`);
+            Drawing1.addText();
+        }
+        if (eventData.source.indexOf(&apos;FontBigger&apos;) &gt;= 0) {
+            presenter.whiteboardFontSize += 10;
+            presenter.whiteboardFontSize = presenter.whiteboardFontSize &lt;= 100 ? presenter.whiteboardFontSize : 100;
+            presenter.playerController.getModule(&apos;Drawing1&apos;).setFont(`${presenter.whiteboardFontSize}px ${presenter.projectFontFamily}`);
+        }
+        if (eventData.source.indexOf(&apos;FontSmaller&apos;) &gt;= 0) {
+            presenter.whiteboardFontSize -= 10;
+            presenter.whiteboardFontSize = presenter.whiteboardFontSize &gt;= 10 ? presenter.whiteboardFontSize : 10;
+            presenter.playerController.getModule(&apos;Drawing1&apos;).setFont(`${presenter.whiteboardFontSize}px ${presenter.projectFontFamily}`);
+        }
+
+        var pageIndex = parseInt(presenter.currentIndex, 10) + 1;
+
+        if (eventData.item == &quot;CUSTOM_EVENT&quot; &amp;&amp; eventData.value == &quot;ANIMATIONS_READY&quot;) {
+            presenter.avatarReady();
+        }
+
+        if (eventName == &quot;ShowAnswers&quot;) {
+            // presenter.showAltAnswers();
+            var tabs = presenter.playerController.getModule(&apos;Tabs1&apos;);
+            if (tabs) tabs.enable();
+            // poprawienie tick przy connection
+            var activity, items, count = 0;
+            var activityId = [];
+            var modulesList = presenter.presentation.getPage(presenter.currentIndex).getModulesAsJS();
+            for (var i = 0; i &lt; 100; i++) {
+                if (modulesList.includes(&apos;Connection&apos; + i)) {
+                    activityId.push(i);
+                    count++;
+                }
+            }
+            for (var i = 0; i &lt; count; i++) {
+                activity = presenter.playerController.getModule(&apos;Connection&apos; + activityId[i]);
+                items = $(activity.getView()).find(&apos;.connectionItem&apos;);
+                for (var j = 0; j &lt; items.length; j++) {
+                    $(items[j]).removeClass(&quot;connectionItem-wrong connectionItem-correct&quot;);
+                }
+            }
+            if (presenter.buttonHA) presenter.buttonHA.style.display = &apos;block&apos;;
+            if (presenter.buttonSA) presenter.buttonSA.style.display = &apos;none&apos;;
+            if (presenter.buttonGSA1) presenter.buttonGSA1.className = &apos;gradual-show-answers-button1&apos;;
+        }
+
+        if (eventName == &quot;HideAnswers&quot;) {
+            // presenter.hideAltAnswers();
+            if (presenter.buttonSA) presenter.buttonSA.style.display = &apos;block&apos;;
+            if (presenter.buttonHA) presenter.buttonHA.style.display = &apos;none&apos;;
+            if (presenter.buttonGSA1) presenter.buttonGSA1.className = &apos;gradual-show-answers-button1&apos;;
+        }
+
+        if (eventName == &quot;PageLoaded&quot;) {
+            if (presenter.showAnswerCounter[pageIndex] == true) {
+                var pageProgress = presenter.playerController.getModule(&apos;Page_Progress_Panel1&apos;);
+                if (pageProgress != undefined) {
+                    $(pageProgress.getView()).addClass(&quot;Page_Progress_Panel_SA&quot;);
+                }
+                var Check_Button1 = presenter.playerController.getModule(&apos;Check_Button1&apos;);
+                if (Check_Button1 != undefined) {
+                    $(Check_Button1.getView()).addClass(&quot;button_check_SA&quot;);
+                }
+            }
+            // report page (actualy last page in lesson, not necessarily report)
+            if (pageIndex == presenter.pageCounter) {
+                var pageId, found;
+                for (var i = 0; i &lt; presenter.PageAllOkArray.length; i++) {
+                    if (presenter.PageAllOkArray[i] != null) {
+                        pageId = presenter.presentation.getPage(i - 1).getId();
+                        var found = document.querySelector(&apos;.addon_Hierarchical_Lesson_Report [data-page-id=&quot;&apos; + pageId + &apos;&quot;]&apos;);
+                        if (found != null) {
+                            var found2 = found.parentElement.parentElement.parentElement.lastElementChild.firstChild;
+                            if (found2) $(found2.firstChild).addClass(&apos;award&apos; + presenter.PageAllOkArray[i]);
+                            // $(found.parentElement.parentElement.parentElement.lastElementChild.firstChild.firstChild).addClass(&apos;award&apos; + presenter.PageAllOkArray[i]);
+                        }
+                    }
+                }
+            }
+        }
+
+        // moving header buttons right when whiteboard loaded
+        // if (eventName == &apos;PageLoaded&apos; &amp;&amp; eventData.source.indexOf(&apos;Whiteboard&apos;) &gt;= 0) {
+        //     var toc = presenter.playerController.getHeaderModule(&apos;TOC_Button&apos;);
+        //     var name = presenter.playerController.getHeaderModule(&apos;Page_Name1&apos;);
+        //     var prog = presenter.playerController.getHeaderModule(&apos;Lesson_Progress1&apos;);
+        //     var exit = presenter.playerController.getHeaderModule(&apos;PreviousPage_Whiteboard&apos;);
+        //     if (name) $(name.getView()).addClass(&apos;Page_Name_MoveRight&apos;);
+        //     if (prog) $(prog.getView()).addClass(&apos;Lesson_Progress_MoveRight&apos;);
+        //     if (toc) $(toc.getView()).addClass(&apos;Double_State_Button_TOC_MoveRight&apos;);
+        //     if (exit) exit.show();
+        // }
+        // if (eventName == &apos;PageLoaded&apos; &amp;&amp; eventData.source.indexOf(&apos;header&apos;) &lt; 0 &amp;&amp; eventData.source.indexOf(&apos;footer&apos;) &lt; 0 &amp;&amp; eventData.source.indexOf(&apos;Whiteboard&apos;) &lt; 0) {
+        //     var toc = presenter.playerController.getHeaderModule(&apos;TOC_Button&apos;);
+        //     var name = presenter.playerController.getHeaderModule(&apos;Page_Name1&apos;);
+        //     var prog = presenter.playerController.getHeaderModule(&apos;Lesson_Progress1&apos;);
+        //     var exit = presenter.playerController.getHeaderModule(&apos;PreviousPage_Whiteboard&apos;);
+        //     if (name) $(name.getView()).removeClass(&apos;Page_Name_MoveRight&apos;);
+        //     if (prog) $(prog.getView()).removeClass(&apos;Lesson_Progress_MoveRight&apos;);
+        //     if (toc) $(toc.getView()).removeClass(&apos;Double_State_Button_TOC_MoveRight&apos;);
+        //     if (exit) exit.hide();
+        // }
+
+        // mark ANB buttons if (&quot;score eq 100%&quot; and Check button is clicked) or if (&quot;Done&quot; is pressed) on pages except GradedTest
+        if (presenter.pageScripts) {
+            if ((eventName == &apos;PageLoaded&apos; || eventName == &apos;ValueChanged&apos;) &amp;&amp; eventData.source.indexOf(&apos;header&apos;) &lt; 0 &amp;&amp; eventData.source.indexOf(&apos;footer&apos;) &lt; 0 &amp;&amp; eventData.source.indexOf(&apos;Whiteboard&apos;) &lt; 0) {
+                var gradedTest = presenter.playerController.getModule(&apos;GradedTest&apos;);
+                if (!gradedTest) {
+                    var page = presenter.playerController.getPresentation().getPage(presenter.currentIndex);
+                    // var ANB = presenter.playerController.getHeaderModule(&apos;Assessments_Navigation_Bar1&apos;);
+                    if (page.isReportable()) {
+                        var pageId = page.getId();
+                        var Score = presenter.playerController.getScore().getPageScoreById(pageId);
+                        if (presenter.projectName == &apos;iExplore&apos; &amp;&amp; presenter.allOKNoCheck) {
+                            if (Score.score == Score.maxScore &amp;&amp; !presenter.pageDone[presenter.currentIndex]) {
+                                presenter.pageDone[presenter.currentIndex] = true;
+                                presenter.respond(&apos;all&apos;);
+                            }
+                        } else {
+                            if (Score.score == Score.maxScore &amp;&amp; presenter.mainCheckCounter[presenter.currentIndex] &gt; 0) {
+                                if (!resetPush) {
+                                    presenter.addANBHeaderBookmark();
+                                    presenter.pageDone[presenter.currentIndex] = true;
+                                } else {
+                                    resetPush = false;
+                                }
+                            } else {
+                                presenter.removeANBHeaderBookmark();
+                                presenter.pageDone[presenter.currentIndex] = false;
+                            }
+                        }
+                    } else {
+                        var teacherContext = presenter.getTeacherContext();
+                        var done = presenter.playerController.getModule(&apos;finished&apos;);
+                        if (done) {
+                            if (done.isSelected()) {
+                                presenter.addANBHeaderBookmark();
+                                presenter.pageDone[presenter.currentIndex] = true;
+                                if (teacherContext != undefined) {
+                                    if (teacherContext == false) {      // STUDENT
+                                        if (presenter.projectName == &apos;Formula&apos;) {
+                                            presenter.showModules(&apos;Show_Example_Answer&apos;);
+                                        }
+                                    }
+                                }
+                            } else {
+                                presenter.removeANBHeaderBookmark();
+                                presenter.pageDone[presenter.currentIndex] = false;
+                                if (teacherContext != undefined) {
+                                    if (teacherContext == false) {      // STUDENT
+                                        if (presenter.projectName == &apos;Formula&apos;) {
+                                            presenter.hideModules(&apos;Show_Example_Answer&apos;);
+                                            presenter.deselectModules(&apos;Show_Example_Answer&apos;);
+                                            presenter.hideModules(&apos;Example_Text&apos;);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (eventName == &quot;PageLoaded&quot; &amp;&amp; eventData.source != &apos;header&apos; &amp;&amp; eventData.source != &apos;footer&apos;) {
+            presenter.loadWindowSize();
+
+            var iframe = presenter.playerController.getModule(&apos;Iframe1&apos;);
+            if (iframe != undefined) {
+                iframe.hide();
+            }
+            var teacherContext = presenter.getTeacherContext();
+            if (teacherContext != undefined) {
+                if (teacherContext == true) {
+                    presenter.showSA();
+                } else {
+                    for (var i = 1; i &lt;= presenter.textNarrationCount; i++) {
+                        if (presenter.playerController.getModule(&apos;show_audio_text&apos; + i) != null) {
+                            presenter.playerController.getModule(&apos;show_audio_text&apos; + i).hide();
+                        }
+                    }
+                }
+            }
+            // change class for drawing on PageLoaded
+            function changeClassForPageLoadedDrawing (buttonName) {
+                var eraserButtonNames = presenter.getPageModules(buttonName).sort();
+                for (name of eraserButtonNames) {
+                    var eraserButton = presenter.playerController.getModule(name);
+                    var idx = 1;
+                    var idxArr = name.match(/\d+/);
+                    if (idxArr) {
+                        idx = parseInt(idxArr[0]) + 1;
+                    }
+                    var drawing = presenter.playerController.getModule(&apos;Drawing&apos; + idx);
+                    if (drawing) {
+                        if (eraserButton) {
+                            if (eraserButton.isSelected()) {
+                                $(drawing.getView()).addClass(&apos;Drawing_eraser&apos;);
+                                $(drawing.getView()).removeClass(&apos;Drawing_marked&apos;);
+                                // drawing.setEraserThickness(25);
+                                // drawing.setEraserOn();
+                            } else {
+                                $(drawing.getView()).addClass(&apos;Drawing_marked&apos;);
+                                $(drawing.getView()).removeClass(&apos;Drawing_eraser&apos;);
+                                if ($(&apos;.ic_page&apos;).hasClass(&apos;highContrast&apos;)) {
+                                    drawing.setColor(&apos;#ffffff&apos;);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            changeClassForPageLoadedDrawing(&apos;markerEraser&apos;);        // change class for drawing black
+            changeClassForPageLoadedDrawing(&apos;markerEraserRed&apos;);     // change class for drawing red
+            changeClassForPageLoadedDrawing(&apos;EraserMarker&apos;);        // change class for drawing yellow
+            // hide Show Answers Context
+            if (presenter.getHideShowAnswersContext() &amp;&amp; presenter.getHideShowAnswersCount == 0) {
+                var SA = presenter.playerController.getModule(&apos;Show_Answers1&apos;);
+                if (SA) SA.hide();
+            }
+            // &quot;NextPage1&quot; show on start up
+            var NP = presenter.playerController.getModule(&apos;NextPage1&apos;);
+            var gradedTest = presenter.playerController.getModule(&apos;GradedTest&apos;);
+            if (NP) {
+                if (presenter.pageScripts) {
+                    if (!gradedTest) setTimeout(() =&gt; NP.show(), 300);
+                } else {
+                    if (!gradedTest) setTimeout(() =&gt; NP.show(), 900);
+                }
+            }
+            // &quot;ImageNext&quot; click event
+            var IN = presenter.playerController.getModule(&apos;ImageNext&apos;);
+            if (IN) {
+                var next = IN.getView();
+                $(next).on(&apos;click touchend&apos;, function (event) {
+                    stopEvent(event);
+                    var confirm = presenter.playerController.getModule(&apos;TextConfirm&apos;);
+                    var yes = presenter.playerController.getModule(&apos;Yes&apos;);
+                    var no = presenter.playerController.getModule(&apos;No&apos;);
+                    if (confirm) confirm.show();
+                    if (yes) yes.show();
+                    if (no) no.show();
+                });
+            }
+            // adding &lt;div&gt; to HTOC text-wraper
+            function checkUnderscore (str) {
+                while(str.includes(&apos;_&apos;)) {
+                    str = str.replace(/_/, &apos;&lt;i&gt;&apos;);
+                    str = str.replace(/_/, &apos;&amp;nbsp;&lt;/i&gt;&apos;);
+                }
+                return str;
+            }
+            var HTOC = presenter.playerController.getModule(&apos;Hierarchical_Table_Of_Contents1&apos;);
+            if (HTOC) {
+                var chapters = $(HTOC.getView()).find(&apos;.text-wrapper&apos;);
+                $.each(chapters, function (i, elem) {
+                    if (!elem.children.length) {
+                        var str = elem.textContent;
+                        var text = str.split(/#(\w*);/).filter(c =&gt; c.length);
+                        elem.textContent = &apos;&apos;;
+                        if (text[0].length &lt;= 5) {
+                            str = `&lt;div class=&quot;chapterNo&quot;&gt;${text[0]}&lt;/div&gt;`;
+                        } else {
+                            str = `&lt;div class=&quot;chapterNo long&quot;&gt;${text[0]}&lt;/div&gt;`;
+                        }
+                        if (text.length == 4) {
+                            str += `&lt;div class=&quot;chapterName ${text[2]}&quot;&gt;${text[1]}&lt;/div&gt;`;
+                            str += `&lt;div class=&quot;chapterTitle&quot;&gt;${checkUnderscore(text[3])}&lt;/div&gt;`;
+                        } else if (text.length == 3) {
+                            str += `&lt;div class=&quot;chapterName&quot;&gt;${text[1]}&lt;/div&gt;`;
+                            str += `&lt;div class=&quot;chapterTitle&quot;&gt;${checkUnderscore(text[2])}&lt;/div&gt;`;
+                        }
+                        $(elem).append(str);
+                    }
+                });
+            }
+            // removing &quot;#;&quot; characters from HLR (Hierarchical Lesson Report)
+            var HLR = presenter.playerController.getModule(&apos;Hierarchical_Lesson_Report1&apos;);
+            if (HLR) {
+                var chapters = $(HLR.getView()).find(&apos;.text-wrapper&apos;);
+                $.each(chapters, function (i, elem) {
+                    if (!elem.children.length) {
+                        var str = elem.textContent;
+                        var text = str.split(/#\w*;/).join(&apos; &apos;);
+                        // elem.textContent = text;
+                        elem.innerHTML = checkUnderscore(text);
+                    }
+                });
+            }
+            // adding class to Yes/No buttons
+            var yes = presenter.playerController.getModule(&apos;Yes&apos;);
+            var no = presenter.playerController.getModule(&apos;No&apos;);
+            if (yes &amp;&amp; no) {
+                $(yes.getView()).addClass(&apos;Single_State_Button_Yes&apos;);
+                $(no.getView()).addClass(&apos;Single_State_Button_No&apos;);
+            }
+        }
+
+        if (eventData.source == &apos;finished&apos;) {
+            if (eventData.value == &apos;1&apos;) {
+                var NP = presenter.playerController.getModule(&apos;NextPage1&apos;);
+                var IN = presenter.playerController.getModule(&apos;ImageNext&apos;);
+                var gradedTest = presenter.playerController.getModule(&apos;GradedTest&apos;);
+                if (NP &amp;&amp; IN) {
+                    if (!gradedTest) {
+                        NP.show();
+                        IN.hide();
+                    } else {
+                        var reportIndex = presenter.presentation.getPageCount() - 1;
+                        if (presenter.currentIndex &lt; reportIndex - 1) {
+                            NP.show();
+                            IN.hide();
+                        }
+                    }
+                }
+            }
+        }
+
+        function confirmHide () {
+            var confirm = presenter.playerController.getModule(&apos;TextConfirm&apos;);
+            var yes = presenter.playerController.getModule(&apos;Yes&apos;);
+            var no = presenter.playerController.getModule(&apos;No&apos;);
+            if (confirm) confirm.hide();
+            if (yes) yes.hide();
+            if (no) no.hide();
+        }
+        if (eventData.source == &apos;Yes&apos;) {
+            confirmHide();
+            presenter.playerController.getCommands().gotoPageIndex(parseInt(presenter.currentIndex) + 1);
+        }
+        if (eventData.source == &apos;No&apos;) {
+            confirmHide();
+        }
+
+        if (eventName == &quot;ResizeWindow&quot;) {
+            var newPlayerLeftOffset = $(&quot;#_icplayer&quot;).offset().left;
+            var viewLeftOffset = presenter.zoomConfiguration.viewLeftOffset;
+            var playerInitialLeftOffset = presenter.zoomConfiguration.playerInitialLeftOffset;
+            var newViewLeftOffset = newPlayerLeftOffset - playerInitialLeftOffset + viewLeftOffset;
+            presenter.$panel.offset({
+                left: newViewLeftOffset
+            });
+        }
+
+        if (eventName == &quot;PageLoaded&quot; &amp;&amp; typeof presenter.PageAllOkArray[pageIndex] == &apos;number&apos;) {
+            var anim = presenter.playerController.getModule(&apos;Animation1&apos;);
+            if (anim != undefined) {
+                anim.reset();
+                var classes = [&apos;&apos;, &apos;Animation_1stGoblet&apos;, &apos;Animation_2stMedal&apos;, &apos;Animation_3stStar&apos;];
+                $(anim.getView()).removeClass(classes[1]);
+                $(anim.getView()).removeClass(classes[2]);
+                $(anim.getView()).removeClass(classes[3]);
+                var whichClass = presenter.PageAllOkArray[pageIndex];
+                $(anim.getView()).addClass(classes[whichClass]);
+                anim.show();
+                if (anim.getView().firstChild.style.display == &apos;none&apos;) {
+                    anim.getView().firstChild.style.display = &apos;block&apos;;
+                }
+            }
+        }
+
+        if (eventName == &apos;PageLoaded&apos; &amp;&amp; eventData.source.indexOf(&apos;header&apos;) == 0 &amp;&amp; eventData.source != &apos;footer&apos;) {
+            presenter.studentHideElements();
+
+            if (!presenter.pageScripts) return;
+
+            var model = presenter.playerController.getPresentation();
+            var page = model.getPage(presenter.currentIndex);
+            var currentPageId = page.getId();
+            var idx = presenter.pagesIDs.indexOf(currentPageId);
+            if (idx &gt; -1) {
+                // --- HEADER - SELECT COVER ICON ---
+                var buttonCover = presenter.playerController.getHeaderModule(&apos;GoToPage1&apos;);
+                if (buttonCover) {
+                    if (presenter.coverIDs.length) {
+                        if (presenter.coverIDs.includes(currentPageId)) {
+                            $(buttonCover.getView()).addClass(&apos;selected&apos;);
+                        } else {
+                            $(buttonCover.getView()).removeClass(&apos;selected&apos;);
+                        }
+                    } else {
+                        if (idx == 0) {
+                            $(buttonCover.getView()).addClass(&apos;selected&apos;);
+                        } else {
+                            $(buttonCover.getView()).removeClass(&apos;selected&apos;);
+                        }
+                    }
+                }
+                // --- HEADER - SELECT REPORT ICON ---
+                var buttonReport = presenter.playerController.getHeaderModule(&apos;GoToPage2&apos;);
+                if (buttonReport) {
+                    if (presenter.reportID) {
+                        if (presenter.reportID == presenter.currentIndex) {
+                            $(buttonReport.getView()).addClass(&apos;selected&apos;);
+                        } else {
+                            $(buttonReport.getView()).removeClass(&apos;selected&apos;);
+                        }
+                    } else {
+                        if (idx == presenter.pagesIDs.length - 1) {
+                            $(buttonReport.getView()).addClass(&apos;selected&apos;);
+                        } else {
+                            $(buttonReport.getView()).removeClass(&apos;selected&apos;);
+                        }
+                    }
+                }
+            }
+
+            // --- COVERPAGE - CHANGE GOTOPAGE STATE ---
+            var coverLength = 1;
+            if (presenter.coverIDs.length &gt; 1) coverLength = presenter.coverIDs.length;
+            for (var i = 0; i &lt; presenter.localPagesIDs.length; i++) {
+                var idx = presenter.pagesIDs.indexOf(presenter.localPagesIDs[i]);
+                if (idx &gt; -1) {
+                    btn = presenter.playerController.getModule(&apos;GoToPage&apos; + (idx - coverLength + 1));
+                    if (btn) {
+                        if (presenter.pageDone[i]) {
+                            $(btn.getView()).addClass(&apos;Page100Percent&apos;);
+                        } else {
+                            $(btn.getView()).removeClass(&apos;Page100Percent&apos;);
+                        }
+                    }
+                }
+            }
+
+            // --- COVERPAGE - HOVER --- [&apos;h&apos;, &apos;b&apos;, &apos;c&apos;]
+            prepareBinding(&apos;GoToPage&apos;);
+            prepareBinding(&apos;Cross_Lesson&apos;);
+
+            function prepareBinding(typ) {
+                var arr = [];
+                var obj = {};
+                var modules = presenter.getPageModules(typ);
+                modules.forEach(modulId =&gt; {
+                    if (/\d/.test(modulId)) {
+                        arr.push(modulId);
+                    }
+                });
+                for (var i = 0; i &lt; arr.length + 20; i++) {
+                    obj[i] = [];
+                }
+                for (var i = 0; i &lt; arr.length; i++) {
+                    let digit = parseInt(arr[i].replace(/(\D+)/, &apos;&apos;));
+                    if (digit) obj[digit].push(arr[i]);
+                }
+                for (var i = 0; i &lt; Object.keys(obj).length; i++) {
+                    if (obj[i].length &gt; 1) {
+                        addHoverBinding(obj[i], typ);
+                    }
+                }
+            }
+            function addHoverBinding(idArr, typ) {
+                idArr.forEach((id, idx, idArr) =&gt; {
+                    hoverBinding(id, idx, idArr, typ);
+                });
+            }
+            function hoverBinding (id, idx, idArr, typ) {
+                var modul = {
+                    GoToPage: 1,
+                    Cross_Lesson: 0
+                };
+                var btnIcon = presenter.playerController.getModule(id);
+                if (btnIcon) {
+                    for (let i = 0; i &lt; idArr.length; i++) {
+                        if (idx != i) {
+                            var btnRect = presenter.playerController.getModule(idArr[i]);
+                            if (btnRect) {
+                                if (/\d/.test(id)) {
+                                    var newClass = $(btnIcon.getView()).attr(&apos;class&apos;).split(&quot; &quot;)[modul[typ]] + &quot;-hovering&quot;;
+                                    $(btnRect.getView()).mouseenter(() =&gt; $(btnIcon.getView()).addClass(newClass));
+                                    $(btnRect.getView()).mouseleave(() =&gt; $(btnIcon.getView()).removeClass(newClass));
+                                } else {
+                                    var newClass = $(btnRect.getView()).attr(&apos;class&apos;).split(&quot; &quot;)[modul[&apos;goToPage&apos;]] + &quot;-hovering&quot;;
+                                    $(btnIcon.getView()).mouseenter(() =&gt; $(btnRect.getView()).addClass(newClass));
+                                    $(btnIcon.getView()).mouseleave(() =&gt; $(btnRect.getView()).removeClass(newClass));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // --- TOC BUTTON ---
+            var tocButton = presenter.playerController.getHeaderModule(&apos;TOC_Button&apos;);
+            if (tocButton) presenter.playerController.getHeaderModule(&apos;TOC_Button&apos;).deselect();
+
+            // --- ANB on the page ---
+            // var ANBpage = presenter.playerController.getModule(&apos;ANB_page&apos;);
+            // if (ANBpage) {
+            //     var section = ANBpage.getView().querySelector(&apos;.current_page&apos;).closest(&apos;.section&apos;);
+            //     var sectionName = section.querySelector(&apos;.section_name&apos;).innerText;
+            //     var ANBhead = presenter.playerController.getHeaderModule(&apos;Assessments_Navigation_Bar1&apos;);
+            //     if (ANBhead) {
+            //         var sections = ANBhead.getView().querySelector(&apos;.sections&apos;).querySelectorAll(&apos;.section&apos;);
+            //         for (section of sections) {
+            //             var name = section.querySelector(&apos;.button_text&apos;);
+            //             if (name.innerText == sectionName) {
+            //                 $(name.closest(&apos;.button&apos;)).addClass(&apos;current_page&apos;);
+            //                 break;
+            //             }
+            //         }
+            //     }
+            // }
+
+            // --- change prev/next button positions on mobile (ANB_bottom and Lesson_Flow)
+            if (presenter.layout == &apos;mobile&apos;) {
+                var pageHeight = $(&apos;.ic_page&apos;)[0].clientHeight;
+                var headerHeight = $(&apos;.ic_header&apos;)[0].clientHeight;
+                var top = `${pageHeight + headerHeight - 50}px`;
+                var ANBbottom = presenter.playerController.getHeaderModule(&apos;ANB_bottom&apos;);
+                if (ANBbottom) {
+                    $(ANBbottom.getView()).css({top: top});
+                }
+                top = `${pageHeight + headerHeight - 180}px`;
+                var lessonFlow = presenter.playerController.getHeaderModule(&apos;Lesson_Flow1&apos;);
+                if (lessonFlow) {
+                    var flowButtons = lessonFlow.getView().querySelector(&apos;.lesson-flow-prev-next-wraper&apos;);
+                    $(flowButtons).css({top: top});
+                }
+            }
+
+            presenter.deselectModules(&apos;Audio_Text&apos;);
+            presenter.hideTextAudioTexts(&apos;audio_text&apos;);
+        }
+
+        // --- ICONS ON SPREAD EDITOR FOR NON-REPORTABLE PAGES
+        // --- REPORTABLE PAGES ARE SUPPORTED BY &apos;MN Spread Editor&apos;
+        if (eventName == &apos;PageLoaded&apos; &amp;&amp; eventData.source.indexOf(&apos;header&apos;) == 0 &amp;&amp; eventData.source != &apos;footer&apos;) {
+            var spreadEditor = presenter.playerController.getModule(&apos;Spread_Editor1&apos;);
+            if (spreadEditor) {
+                for (var i = 0; i &lt; presenter.localPagesIDs.length; i++) {
+                    var page = presenter.presentation.getPage(i);
+                    if (!page.isReportable()) {
+                        var idx = presenter.pagesIDs.indexOf(presenter.localPagesIDs[i]);
+                        if (idx &gt; -1) {
+                            btn = presenter.playerController.getModule(&apos;Double_State_Button&apos; + idx);
+                            if (btn) {
+                                if (presenter.pageDone[i]) {
+                                    btn.select();
+                                } else {
+                                    btn.deselect();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // === TOC_Button ===
+        if (eventData.source.indexOf(&apos;TOC_Button&apos;) &gt;= 0) {
+            if (!presenter.pageScripts) return;
+
+            var TOC = presenter.playerController.getHeaderModule(&apos;Table_Of_Contents1&apos;).getView();
+            if (eventData.value == &apos;1&apos;) {
+                $(TOC).fadeIn({duration: 200, queue: false});
+            }
+            if (eventData.value == &apos;0&apos;) {
+                $(TOC).fadeOut({duration: 200, queue: false});
+            }
+        }
+
+        // === IFRAME ===
+        if (eventData.item == &apos;CUSTOM_EVENT&apos; &amp;&amp; eventData.value == &apos;ANIMATION_FINISHED&apos;) {
+            var iframe = presenter.playerController.getModule(&apos;Iframe1&apos;);
+            if (iframe != undefined) {
+                iframe.hide();
+            }
+            setTimeout(() =&gt; {
+                var anim = presenter.playerController.getModule(&apos;Animation1&apos;);
+                if (anim != undefined) {
+                    var classes = [&apos;&apos;, &apos;Animation_1stGoblet&apos;, &apos;Animation_2stMedal&apos;, &apos;Animation_3stStar&apos;];
+                    $(anim.getView()).removeClass(classes[1]);
+                    $(anim.getView()).removeClass(classes[2]);
+                    $(anim.getView()).removeClass(classes[3]);
+                    var whichClass = presenter.PageAllOkArray[pageIndex];
+                    $(anim.getView()).addClass(classes[whichClass]);
+                    anim.show();
+                    if (anim.getView().firstChild.style.display == &apos;none&apos;) {
+                        anim.getView().firstChild.style.display = &apos;block&apos;;
+                    }
+                    /*console.log(&apos;IFRAME FINISHED - ANIMATION SHOW&apos;, anim.getView());*/
+                }
+            });
+        }
+
+        // === VIDEO SUBTITLES ===
+        if (eventData.source.indexOf(&apos;dsb&apos;) == 0) {
+            if (eventData.source.length == 3) {
+                modul = presenter.playerController.getModule(&apos;video1&apos;);
+                if (modul) {
+                    if (eventData.value == &apos;1&apos;) {
+                        modul.showSubtitles();
+                    } else {
+                        modul.hideSubtitles();
+                    }
+                }
+            } else if (eventData.source.length &gt; 3) {
+                var id = parseInt(eventData.source.slice(3), 10);
+                modul = presenter.playerController.getModule(&apos;video&apos; + (id + 1));
+                if (modul) {
+                    if (eventData.value == &apos;1&apos;) {
+                        modul.showSubtitles();
+                    } else {
+                        modul.hideSubtitles();
+                    }
+                }
+            }
+        }
+
+        // === EXAMPLE ANSWER ===
+        if (eventData.source.indexOf(&apos;Show_Example_Answer&apos;) &gt;= 0) {
+            if (!presenter.pageScripts) return;
+
+            var idx = parseInt(eventData.source.slice(19));
+            var modul = presenter.playerController.getModule(&apos;Example_Text&apos; + idx);
+            if (modul) {
+                if (eventData.value == &apos;1&apos;) {
+                    modul.show();
+                } else {
+                    modul.hide();
+                }
+            }
+        }
+
+        // === MODEL ANSWER ===
+        if (eventData.source.indexOf(&apos;ShowModelAnswer&apos;) &gt;= 0) {
+            var idx = parseInt(eventData.source.slice(15));
+            var modul = presenter.playerController.getModule(&apos;ModelText&apos; + idx);
+            if (modul) {
+                if (eventData.value == &apos;1&apos;) {
+                    modul.show();
+                } else {
+                    modul.hide();
+                }
+            }
+        }
+
+        // === CHANGE CLASS FOR DRAWING
+        function changeClassForDrawing (button, color, thickness, opacity) {
+            var moduleIdx = eventData.source.slice(button.length);
+            var idx = 0;
+            if (moduleIdx) idx = parseInt(moduleIdx);
+            var drawing = presenter.playerController.getModule(&apos;Drawing&apos; + (idx + 1));
+            if (drawing) {
+                if (eventData.value == &apos;1&apos;) {
+                    drawing.setEraserThickness(25);
+                    drawing.setEraserOn();
+                    $(drawing.getView()).addClass(&apos;Drawing_eraser&apos;);
+                    $(drawing.getView()).removeClass(&apos;Drawing_marked&apos;);
+                } else {
+                    drawing.setColor(color);
+                    drawing.setThickness(thickness);
+                    drawing.setOpacity(opacity);
+                    $(drawing.getView()).addClass(&apos;Drawing_marked&apos;);
+                    $(drawing.getView()).removeClass(&apos;Drawing_eraser&apos;);
+                }
+            }
+        }
+        if (eventData.source.indexOf(&apos;markerEraser&apos;) &gt;= 0) {        // BLACK DRAWING
+            if ($(&apos;.ic_page&apos;).hasClass(&apos;highContrast&apos;)) {
+                changeClassForDrawing(&apos;markerEraser&apos;, &apos;#ffffff&apos;, 4, 1);
+            } else {
+                changeClassForDrawing(&apos;markerEraser&apos;, &apos;#000000&apos;, 4, 1);
+            }
+        }
+        if (eventData.source.indexOf(&apos;markerEraserRed&apos;) &gt;= 0) {     // RED DRAWING
+            changeClassForDrawing(&apos;markerEraserRed&apos;, &apos;#ff0000&apos;, 4, 1);
+        }
+        if (eventData.source.indexOf(&apos;EraserMarker&apos;) &gt;= 0) {        // YELLOW DRAWING
+            if (presenter.projectName == &apos;GoldExperience&apos;) {
+                var pageClass = document.querySelector(&apos;.ic_page&apos;).classList[1];
+                var color = {
+                    page_teal:   &apos;#3359af&apos;,
+                    page_cyan:   &apos;#26BDA8&apos;,
+                    page_purple: &apos;#BD4CA6&apos;,
+                    page_red:    &apos;#FF4237&apos;,
+                    page_orange: &apos;#ff9839&apos;,
+                    page_green:  &apos;#9BC456&apos;,
+                    page_violet: &apos;#7E6AB6&apos;,
+                    page_blue:   &apos;#00ABE7&apos;
+                };
+                changeClassForDrawing(&apos;EraserMarker&apos;, color[pageClass], 25, 0.5);
+            } else if (presenter.projectName == &apos;GoGetter&apos;) {
+                changeClassForDrawing(&apos;EraserMarker&apos;, &apos;#000000&apos;, 4, 1);
+            } else {
+                changeClassForDrawing(&apos;EraserMarker&apos;, &apos;#e4ff7f&apos;, 15, 0.6);
+            }
+        }
+
+        // === NEW NARRATION MODULES AND TEXT AUDIO MODULES ===
+        if (eventData.source.indexOf(&apos;Audio_Text&apos;) &gt;= 0) {
+            if (!presenter.pageScripts) return;
+
+            var idx = parseInt(eventData.source.slice(10));
+            var modul = presenter.playerController.getModule(&apos;audio_text&apos; + idx);
+            if (modul) {
+                var el = modul.getView().querySelector(&apos;.textaudio-text&apos;);
+                if (eventData.value == &apos;1&apos;) {
+                    if (el) $(el).css({visibility: &apos;visible&apos;, height: &apos;&apos;, margin: &apos;&apos;, padding: &apos;&apos;});
+                } else {
+                    if (el) $(el).css({visibility: &apos;hidden&apos;, height: &apos;0&apos;, margin: &apos;0&apos;, padding: &apos;0&apos;});
+                }
+            }
+        }
+
+        // === OLD NARRATION MODULES ===
+        if (eventData.source.indexOf(&apos;show_audio_text&apos;) &gt;= 0) {
+            if (eventData.value == 1) {
+                presenter.isTextNarrationVisible = true;
+            } else {
+                presenter.isTextNarrationVisible = false;
+            }
+            var id = parseInt(eventData.source.slice(15));
+            var showAudio, closeAudio, textNarration;
+            for (var i = 1; i &lt;= presenter.textNarrationCount; i++) {
+                showAudio = presenter.playerController.getModule(&apos;show_audio_text&apos; + i);
+                closeAudio = presenter.playerController.getModule(&apos;close_audio_text&apos; + i);
+                textNarration = presenter.playerController.getModule(&apos;audio_text&apos; + i);
+                if (eventData.value == &apos;1&apos;) {
+                    if (i != id) {
+                        if (textNarration) textNarration.hide();
+                        if (closeAudio) closeAudio.hide();
+                        if (showAudio) showAudio.deselect();
+                    } else {
+                        if (textNarration) textNarration.show();
+                        if (closeAudio) closeAudio.show();
+                    }
+                } else if (eventData.value == 0) {
+                    if (textNarration) textNarration.hide();
+                    if (closeAudio) closeAudio.hide();
+                }
+            }
+        }
+        if (eventData.source.indexOf(&apos;close_audio_text&apos;) == 0) {
+            presenter.isTextNarrationVisible = false;
+            var audioText, closeAudioText, showAudioText;
+            for (var i = 1; i &lt;= presenter.textNarrationCount; i++) {
+                audioText = presenter.playerController.getModule(&apos;audio_text&apos; + i);
+                closeAudioText = presenter.playerController.getModule(&apos;close_audio_text&apos; + i);
+                showAudioText = presenter.playerController.getModule(&apos;show_audio_text&apos; + i);
+                if (audioText) audioText.hide();
+                if (closeAudioText) closeAudioText.hide();
+                if (showAudioText) showAudioText.deselect()
+            }
+        }
+
+        function stopAudioModules (a, b, c, d, e) {
+            presenter.stopAudio(a);
+            presenter.stopTextAudio(b);
+            presenter.stopAudioText(c);
+            presenter.stopRecorders(d);
+            if (e) {
+                presenter.handleDSButtons(0, &apos;deselect&apos;);
+            } else {
+                presenter.handleDSButtons(a, &apos;deselect&apos;);
+            }
+        }
+        // === STANDALONE AUDIO MODULE START PLAYING ===
+        if (eventData.source != &apos;header&apos; &amp;&amp; eventData.source != &apos;footer&apos; &amp;&amp; eventData.source.indexOf(&apos;Audio&apos;) == 0 &amp;&amp; eventData.value == &apos;playing&apos;) {
+            var id = parseInt(eventData.source.slice(5));
+            stopAudioModules(id, 0, 0, 0, eventData.source);
+            var audioText, closeAudioText, showAudioText;
+            if (presenter.isTextNarrationVisible) {
+                for (var i = 1; i &lt;= presenter.textNarrationCount; i++) {
+                    if (i != id) {
+                        audioText = presenter.playerController.getModule(&apos;audio_text&apos; + i);
+                        closeAudioText = presenter.playerController.getModule(&apos;close_audio_text&apos; + i);
+                        showAudioText = presenter.playerController.getModule(&apos;show_audio_text&apos; + i);
+                        if (audioText) audioText.hide();
+                        if (closeAudioText) closeAudioText.hide();
+                        if (showAudioText) showAudioText.deselect()
+                    }
+                }
+                audioText = presenter.playerController.getModule(&apos;audio_text&apos; + id);
+                closeAudioText = presenter.playerController.getModule(&apos;close_audio_text&apos; + id);
+                showAudioText = presenter.playerController.getModule(&apos;show_audio_text&apos; + id);
+                if (audioText) audioText.show();
+                if (closeAudioText) closeAudioText.show();
+                if (showAudioText) showAudioText.select()
+            }
+        }
+        // === MEDIA_RECORDER ===
+        if (eventData.source.indexOf(&apos;Media_Recorder&apos;) &gt;= 0) {
+            var recorderNr = parseInt(eventData.source.slice(14));
+            if (eventData.value == &apos;playing&apos; || eventData.value == &apos;start&apos;) {
+                if (presenter.projectName == &apos;Speakout&apos;) {
+                    presenter.stopRecorders(recorderNr);
+                } else {
+                    stopAudioModules(0, 0, 0, recorderNr);
+                }
+            } else if (eventData.value == &apos;stop&apos;) {
+            }
+        }
+        // === TEXT_AUDIO MODULE START PLAYING ===
+        if (eventData.source.indexOf(&apos;audio_text&apos;) == 0 &amp;&amp; eventData.value == &apos;playing&apos;) {
+            var audioNr = parseInt(eventData.source.slice(10), 10);
+            stopAudioModules(0, 0, audioNr, 0);
+        }
+        if (eventData.source.indexOf(&apos;TextAudio&apos;) == 0 &amp;&amp; eventData.value == &apos;playing&apos;) {
+            var audioNr = parseInt(eventData.source.slice(9), 10);
+            stopAudioModules(0, audioNr, 0, 0);
+        }
+        // === DOUBLE_STATE_BUTTON ===
+        if (eventData.source.indexOf(&apos;Double_State_Button&apos;) &gt;= 0) {
+            var buttonNr = parseInt(eventData.source.slice(19));
+            var button = presenter.playerController.getModule(eventData.source);
+            if (button) {
+                if ($(button.getView()).hasClass(&apos;Double_State_Button_Audio_Icon&apos;)) {
+                    if (eventData.value == 1) {
+                        stopAudioModules(buttonNr, 0, 0, 0);
+                    }
+                }  
+            }
+        }
+
+        // === PAGE PROGRESS PANEL ===
+        if (presenter.mainCheckCounter[presenter.currentIndex]) {
+            var page = presenter.presentation.getPage(presenter.currentIndex);
+            var id = page.getId();
+            var score = presenter.scoreService.getPageScoreById(id);
+            if (score.maxScore &gt; 0 &amp;&amp; score.score === score.maxScore &amp;&amp; score.errorCount == 0) {
+                let pppModule = presenter.playerController.getModule(&apos;Page_Progress_Panel1&apos;);
+                if (pppModule) {
+                    var percentageScore = (score.score * 100.0) / score.maxScore;
+                    let pageScore = {
+                        progress: parseInt(percentageScore, 10),
+                        sumOfMaxScore: score.maxScore,
+                        sumOfMistakes: score.mistakeCount,
+                        sumOfErrors: score.errorCount,
+                        sumOfChecks: score.checkCount,
+                        sumOfScores: score.score
+                    };
+                    pppModule.displayScores(pageScore);
+                }
+            }
+        }
+    };
+
+    presenter.getLastVisitedPageIndex = function () {
+        return lastVisitedPageIndex;
+    };
+    presenter.getLastVisitedPageId = function () {
+        return lastVisitedPageId;
+    };
+
+    // === CHECK RESULTS ===
+    presenter.setShowErrorsMode = function () {
+        // presenter.hideAltAnswers();
+        var page = presenter.presentation.getPage(presenter.currentIndex);
+        var id = page.getId();
+        var score = presenter.scoreService.getPageScoreById(id);
+        var pageIndex = parseInt(presenter.currentIndex, 10) + 1;
+        var anim = presenter.playerController.getModule(&apos;Animation1&apos;);
+        // limited panel
+        if (presenter.mainCheckCounter[pageIndex - 1]) {
+            presenter.mainCheckCounter[pageIndex - 1] += 1;
+        } else {
+            presenter.mainCheckCounter[pageIndex - 1] = 1;
+        }
+        if (typeof presenter.PageAllOkArray[pageIndex] !== &apos;number&apos;) {
+            if (anim != undefined) {
+                anim.hide();
+                var classes = [&apos;&apos;, &apos;Animation_1stGoblet&apos;, &apos;Animation_2stMedal&apos;, &apos;Animation_3stStar&apos;];
+                $(anim.getView()).removeClass(classes[1]);
+                $(anim.getView()).removeClass(classes[2]);
+                $(anim.getView()).removeClass(classes[3]);
+            }
+            if (score.maxScore &gt; 0 &amp;&amp; score.score === score.maxScore &amp;&amp; score.errorCount == 0) {
+                if (presenter.projectName == &apos;iExplore&apos; &amp;&amp; presenter.allOKNoCheck) {
+                } else {
+                    presenter.pageDone[presenter.currentIndex] = true;
+                    if (presenter.mainCheckCounter[pageIndex - 1] == 1) {
+                        presenter.PageAllOkArray[pageIndex] = 1;
+                        if (anim) $(anim.getView()).addClass(classes[1]);
+                        presenter.respond(&apos;all&apos;);
+                    } else if (presenter.mainCheckCounter[pageIndex - 1] == 2) {
+                        presenter.PageAllOkArray[pageIndex] = 2;
+                        if (anim) $(anim.getView()).addClass(classes[2]);
+                        presenter.respond(&apos;all&apos;);
+                    } else {
+                        presenter.PageAllOkArray[pageIndex] = 3;
+                        if (anim) $(anim.getView()).addClass(classes[3]);
+                        presenter.respond(&apos;all&apos;);
+                    }
+                    var iframe = presenter.playerController.getModule(&apos;Iframe1&apos;);
+                    var prizeNumber = presenter.PageAllOkArray[pageIndex];
+                    if (iframe != undefined) {
+                        iframe.show();
+                        iframe.sendMessage(&apos;CUSTOM_MESSAGE&apos;, {
+                            action: &apos;play&apos;,
+                            anim: prizeNumber
+                        });
+                    }
+                    presenter.addANBHeaderBookmark();
+                    if (anim != undefined) {
+                        anim.hide();
+                        var classes = [&apos;&apos;, &apos;Animation_1stGoblet&apos;, &apos;Animation_2stMedal&apos;, &apos;Animation_3stStar&apos;];
+                        $(anim.getView()).removeClass(classes[1]);
+                        $(anim.getView()).removeClass(classes[2]);
+                        $(anim.getView()).removeClass(classes[3]);
+                        var whichClass = presenter.PageAllOkArray[pageIndex];
+                        $(anim.getView()).addClass(classes[whichClass]);
+                        setTimeout(() =&gt; {
+                            anim.show();
+                            if (anim.getView().firstChild.style.display == &apos;none&apos;) {
+                                anim.getView().firstChild.style.display = &apos;block&apos;;
+                            }
+                        /*console.log(&apos;CHECK TIMEOUT 2950 - ANIMATION SHOW&apos;, anim.getView());*/
+                        }, 2950);
+                    }
+                }
+            } else if (presenter.mainCheckCounter[pageIndex - 1] &gt;= presenter.checksNumber) {
+                if (!presenter.playerController.getContextMetadata() || !presenter.getHideShowAnswersContext() || presenter.getHideShowAnswersOption() == 0) {
+                    presenter.showSA();
+                } else if (presenter.getHideShowAnswersOption() == 2 &amp;&amp; presenter.getHideShowAnswersCount() &gt; 0) {
+                    presenter.showSA();
+                }
+                if (!presenter.limitedCheckCount[pageIndex - 1]) {
+                    presenter.limitedCheckCount[pageIndex - 1] = [];
+                }
+                presenter.collectLimitedPanels(0);
+                if (presenter.panelGSA) {
+                    for (let i = 0; i &lt; presenter.panelGSA.length; i++) {
+                        presenter.limitedCheckCount[pageIndex - 1][i] = presenter.checksNumber;
+                    }
+                    for (let i = 0; i &lt; presenter.panelGSA.length; i++) {
+                        presenter.playerController.getModule(presenter.panelGSA[i][1]).show();
+                    }
+                }
+            }
+        }
+        // limited panel
+        let pppModule = presenter.playerController.getModule(&apos;Page_Progress_Panel1&apos;);
+        if (pppModule) {
+            let ppp = pppModule.getView();
+            ppp.querySelector(&apos;.checks&apos;).querySelector(&apos;.value&apos;).innerText = presenter.mainCheckCounter[pageIndex - 1];
+        }
+
+        var NP = presenter.playerController.getModule(&apos;NextPage1&apos;);
+        var IN = presenter.playerController.getModule(&apos;ImageNext&apos;);
+        var gradedTest = presenter.playerController.getModule(&apos;GradedTest&apos;);
+        if (score.checkCount &gt; 0) {
+            if (NP &amp;&amp; !gradedTest) NP.show();
+            if (IN &amp;&amp; !gradedTest) IN.hide();
+        } else {
+            // if (NP &amp;&amp; !gradedTest) NP.hide();
+            if (IN &amp;&amp; !gradedTest) IN.show();
+        }
+        if (!page.isReportable()) {
+            if (NP &amp;&amp; !gradedTest) NP.show();
+            if (IN &amp;&amp; !gradedTest) IN.hide();
+        }
+
+        if (presenter.buttonHA) presenter.buttonHA.style.display = &apos;none&apos;;
+        if (presenter.buttonSA) presenter.buttonSA.style.display = &apos;block&apos;;
+
+        var teacherContext = presenter.getTeacherContext();
+        if (teacherContext != undefined) {
+            if (teacherContext == false) {      // STUDENT
+                if (presenter.projectName == &apos;Formula&apos;) {
+                    presenter.showModules(&apos;Show_Example_Answer&apos;);
+                }
+            }
+        }
+    };
+
+    presenter.respond = function (response) {
+        if (presenter.isAvatarReady) {
+            var Audio = presenter.playerController.getHeaderModule(&apos;multiAudioCheck&apos;);
+            if (response == &apos;all&apos;) {
+                var pageIndex = parseInt(presenter.currentIndex, 10) + 1;
+                var prizeNumber = presenter.PageAllOkArray[pageIndex];
+                if (presenter.projectName == &apos;iExplore&apos; &amp;&amp; presenter.allOKNoCheck) {
+                    prizeNumber = 1;
+                    var iframe = presenter.playerController.getModule(&apos;Iframe1&apos;);
+                    if (iframe != undefined) {
+                        iframe.show();
+                        iframe.sendMessage(&apos;CUSTOM_MESSAGE&apos;, {
+                            action: &apos;play&apos;,
+                            anim: 1
+                        });
+                    }
+                    var anim = presenter.playerController.getModule(&apos;Animation1&apos;);
+                    if (anim != undefined) {
+                        anim.hide();
+                        var classes = [&apos;&apos;, &apos;Animation_1stGoblet&apos;, &apos;Animation_2stMedal&apos;, &apos;Animation_3stStar&apos;];
+                        $(anim.getView()).removeClass(classes[1]);
+                        $(anim.getView()).removeClass(classes[2]);
+                        $(anim.getView()).removeClass(classes[3]);
+                        presenter.PageAllOkArray[pageIndex] = 1;
+                        $(anim.getView()).addClass(classes[1]);
+                        setTimeout(() =&gt; {
+                            anim.show();
+console.log(&apos;CHECK TIMEOUT 2950 - ANIMATION SHOW&apos;, anim.getView());
+                        }, 2950);
+                    }
+                }
+                if (Audio != undefined) {
+                    Audio.jumpTo(prizeNumber);
+                    Audio.stop();
+                    // Audio.play();
+                }
+            } else {
+                if (Audio != undefined) {
+                    Audio.stop();
+                }
+            }
+            presenter.response = &apos;&apos;;
+        } else {
+            presenter.response = response;
+        }
+    };
+
+    presenter.addButtonsToAllAudioModules = function () {
+        window.audioTooltipClickHandler = function (i, url) {
+            var textInputView = presenter.playerController.getModule(&apos;textInput&apos;).getView();
+            var copyText = $(textInputView).find(&quot;input&quot;).get(0);
+            copyText.value = url;
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            document.execCommand(&quot;copy&quot;);
+
+            var tooltip = document.getElementById(&quot;myTooltip&quot; + i);
+            if(tooltip){
+                tooltip.innerHTML = &quot;Link copied!&quot;;
+            }
+        }
+
+        window.audioTooltipOutFunc = function (i) {
+            var tooltip = document.getElementById(&quot;myTooltip&quot; + i);
+            if(tooltip){
+                tooltip.innerHTML = &quot;Copy to clipboard&quot;;
+            }
+            
+        }
+
+        for (var i = 1; i &lt;= presenter.getModulesCount(&apos;Audio&apos;); i++) {
+            var view = $(presenter.playerController.getModule(&apos;Audio&apos; + i).getView()).find(&apos;.wrapper-addon-audio&apos;).get(0);
+            var url = &quot;&apos;&quot; + $(view).find(&quot;audio&quot;).get(0).src + &quot;&apos;&quot;;
+            var toAppend = &apos;&lt;div class=&quot;tooltip&quot;&gt;&lt;button onclick=&quot;window.audioTooltipClickHandler(&apos; + i + &apos;,&apos; + url;
+            toAppend += &apos;)&quot; onmouseout=&quot;window.audioTooltipOutFunc(&apos; + i + &apos;)&quot;&gt;&lt;span class=&quot;tooltiptext&quot; id=&quot;myTooltip&apos; + i;
+            toAppend += &apos;&quot;&gt;Copy to clipboard&lt;/span&gt;Copy link&lt;/button&gt;&lt;/div&gt;&apos;;
+            $(view).append(toAppend);
+        }
+    };
+
+    // === UNCHECK RESULTS ===
+    presenter.setWorkMode = function () {
+        var pageIndex = parseInt(presenter.currentIndex, 10) + 1;
+        if (presenter.showAnswerCounter[pageIndex] == true) {
+            var Check_Button1 = presenter.playerController.getModule(&apos;Check_Button1&apos;);
+            if (Check_Button1 != undefined) {
+                $(Check_Button1.getView()).addClass(&quot;button_check_SA&quot;);
+            }
+        }
+        var teacherContext = presenter.getTeacherContext();
+        if (teacherContext != undefined) {
+            if (teacherContext == false) {      // STUDENT
+                if (presenter.projectName == &apos;Formula&apos;) {
+                    presenter.hideModules(&apos;Show_Example_Answer&apos;);
+                    presenter.deselectModules(&apos;Show_Example_Answer&apos;);
+                    presenter.hideModules(&apos;Example_Text&apos;);
+                }
+            }
+        }
+    };
+
+    // === RESET ===
+    presenter.reset = function () {
+        // hide pdf goto page on reset
+        if (presenter.hidePDFgotopage) {
+            var gotoPDFPageButton = presenter.playerController.getHeaderModule(&apos;SSBGoToPDFPage&apos;);
+            if (gotoPDFPageButton) gotoPDFPageButton.hide();
+            if (gotoPDFPageButton) setTimeout(() =&gt; gotoPDFPageButton.hide());
+        }
+        // rk dodane
+        resetPush = true;
+        setTimeout(() =&gt; presenter.studentHideElements(), 0);
+        var whiteboard = presenter.playerController.getHeaderModule(&apos;whiteboard&apos;);
+        var teacherContext = presenter.getTeacherContext();
+        if (whiteboard &amp;&amp; !teacherContext) whiteboard.hide();
+
+        var iframe = presenter.playerController.getModule(&apos;Iframe1&apos;);
+        if (iframe) iframe.hide();
+        // limited panel
+        presenter.collectLimitedPanels(1);
+        var pageIndex = parseInt(presenter.currentIndex, 10) + 1;
+        presenter.PageAllOkArray[pageIndex] = false;
+        if (presenter.showAnswerCounter[pageIndex] == true) {
+            var Check_Button1 = presenter.playerController.getModule(&apos;Check_Button1&apos;);
+            if (Check_Button1 != undefined) {
+                $(Check_Button1.getView()).addClass(&quot;button_check_SA&quot;);
+            }
+        }
+        // to remove an error on reset
+        var page = presenter.presentation.getPage(presenter.currentIndex);
+        var hideGradualPanel = presenter.playerController.getModule(&apos;Hide_Gradual_Panel&apos;);
+        var gradualPanel = presenter.playerController.getModule(&apos;Add_Gradual_Panel&apos;);
+        if (!hideGradualPanel &amp;&amp; (page.isReportable() || gradualPanel)) {
+            if (presenter.buttonSA) presenter.buttonSA.style.display = &apos;block&apos;;
+            if (presenter.buttonHA) presenter.buttonHA.style.display = &apos;none&apos;;
+            if (presenter.buttonGSA1) presenter.buttonGSA1.className = &apos;gradual-show-answers-button1&apos;;
+        }
+        // restore class for drawing
+        function restoreClassForDrawing (button) {
+            var eraserButtonNames = presenter.getPageModules(button).sort();
+            for (var name of eraserButtonNames) {
+                name = name.slice(button.length);
+                var idx = 0;
+                if (name) idx = parseInt(name);
+                var drawing = presenter.playerController.getModule(&apos;Drawing&apos; + (idx + 1));
+                if (drawing) {
+                    $(drawing.getView()).addClass(&apos;Drawing_marked&apos;);
+                    $(drawing.getView()).removeClass(&apos;Drawing_eraser&apos;);
+                    if ($(&apos;.ic_page&apos;).hasClass(&apos;highContrast&apos;)) {
+                        drawing.setColor(&apos;#ffffff&apos;);
+                    }
+                }
+            }
+        }
+        restoreClassForDrawing(&apos;markerEraser&apos;);     // restore class for black drawing
+        restoreClassForDrawing(&apos;markerEraserRed&apos;);  // restore class for red drawing
+        restoreClassForDrawing(&apos;EraserMarker&apos;);     // restore class for yellow drawing
+        // reset bookmark in ANB
+        var reset = presenter.playerController.getModule(&apos;Reset1&apos;);
+        if (reset &amp;&amp; !$(reset.getView()).hasClass(&apos;reset_whiteboard&apos;)) {
+            let ANB = presenter.playerController.getHeaderModule(&apos;Assessments_Navigation_Bar1&apos;);
+            if (ANB) ANB.removeBookmark();
+            ANB = presenter.playerController.getFooterModule(&apos;Assessments_Navigation_Bar1&apos;);
+            if (ANB) ANB.removeBookmark();
+        }
+        if (reset &amp;&amp; $(reset.getView()).hasClass(&apos;reset_whiteboard&apos;)) {
+            var close = presenter.playerController.getHeaderModule(&apos;PreviousPage_Whiteboard&apos;);
+            if (close) setTimeout(() =&gt; close.show(), 0);
+            // if (close) close.show();
+        }
+        presenter.pageDone[presenter.currentIndex] = false;
+        presenter.hideTextAudioTexts(&apos;audio_text&apos;);
+
+        var NP = presenter.playerController.getModule(&apos;NextPage1&apos;);
+        var gradedTest = presenter.playerController.getModule(&apos;GradedTest&apos;);
+        if (NP) {
+            if (presenter.pageScripts) {
+                if (!gradedTest) setTimeout(() =&gt; NP.show(), 300);
+            } else {
+                if (!gradedTest) setTimeout(() =&gt; NP.show(), 800);
+            }
+        }
+
+        presenter.stopRecorders(0);
+        presenter.stopTextAudio(0);
+        presenter.stopAudioText(0);
+        presenter.stopAudio(0);
+    };
+
+    presenter.goToPDFPage = function (pageNumber) {
+        var data = {
+            type: &apos;lesson&apos;,
+            openLessonInCurrentTab: true
+        };
+        if (presenter.linksModel[pageNumber]) {
+            data.lessonID = presenter.linksModel[pageNumber];
+            var jsonData = JSON.stringify(data);
+            presenter.playerController.sendExternalEvent(&apos;crossLesson&apos;, jsonData);
+        } else {
+            console.error(&apos;No LessonID defined for page &apos; + pageNumber + &apos; in GL_ControllerPearson.&apos;)
+        }
+    };
+
+    // presenter.fontSizeMobileFix = function () {
+    //     // font-size mobile fix ver.1
+    //     var icPage = document.querySelector(&apos;.ic_page&apos;);
+    //     var ulliExceptionClasses = [&apos;text_skills_management&apos;, &apos;text_skills_communication&apos;, &apos;text_skills_mediation&apos;, &apos;text_shape_vocabulary&apos;, &apos;text_box_gray_title&apos;,
+    //             &apos;text_box_gray2_title&apos;, &apos;text_box_communication_title&apos;, &apos;text_box_communication2_title&apos;, &apos;text_box_writing_title&apos;, &apos;text_box_writing2_title&apos;,
+    //             &apos;text_box_grammar_title&apos;, &apos;text_box_grammar2_title&apos;, &apos;text_box_vocabulary_title&apos;, &apos;text_box_vocabulary2_title&apos;, &apos;text_box_look_gray&apos;, &apos;text_box_look_green&apos;];
+
+    //     $(icPage).find(&apos;ol li&apos;).css({fontSize: &apos;18px&apos;});
+    //     $(icPage).find(&apos;.ic_soption .html-face&apos;).css({fontSize: &apos;18px&apos;});
+    //     $(icPage).find(&apos;.ic_moption .html-face&apos;).css({fontSize: &apos;18px&apos;});
+
+    //     $(icPage).find(&apos;ul li&apos;).css({fontSize: &apos;18px&apos;});
+    //     $(icPage).find(&apos;ul li:nth-child(1)&apos;).each(function (idx, elem) {
+    //         if (ulliExceptionClasses.includes(elem.parentElement.parentElement.className)) {
+    //             elem.style.fontSize = null;
+    //         }
+    //     });
+    //     $(icPage).find(&apos;ul li:nth-child(2)&apos;).each(function (idx, elem) {
+    //         if (ulliExceptionClasses.includes(elem.parentElement.parentElement.className)) {
+    //             elem.style.fontSize = null;
+    //         }
+    //     });
+    //     $(icPage).find(&apos;.text_box_look_gray, .text_box_look_green&apos;).each(function (idx, elem) {
+    //         var ulli = elem.querySelectorAll(&apos;ul li&apos;).forEach(function (el) {
+    //             el.style.fontSize = null;
+    //         });
+    //     });
+    // };
+
+    presenter.getState = function () {
+        return JSON.stringify({
+            PageAllOkArray: presenter.PageAllOkArray,
+            limitedCheckCount: presenter.limitedCheckCount,
+            mainCheckCounter: presenter.mainCheckCounter,
+            showAnswerCounter: presenter.showAnswerCounter,
+            whiteboardFontSize: presenter.whiteboardFontSize,
+            panelCoords: presenter.panelCoords,
+            pageDone: presenter.pageDone,
+            lastVisitedPageId: presenter.presentation.getPage(presenter.currentIndex).getId(),
+            lastVisitedPageIndex: presenter.currentIndex
+        });
+    };
+
+    presenter.setState = function (state) {
+        if (state === undefined || state === &apos;&apos;) {
+            presenter.PageAllOkArray = [];
+            presenter.showAnswerCounter = [];
+            presenter.whiteboardFontSize = 30;
+            presenter.createLimitedArrays();
+            presenter.pageDone = [];
+            lastVisitedPageId = 0;
+            lastVisitedPageIndex = 0;
+        } else {
+            var parsedState = JSON.parse(state);
+            presenter.PageAllOkArray = parsedState.PageAllOkArray;
+            lastVisitedPageId = parsedState.lastVisitedPageId;
+            lastVisitedPageIndex = parsedState.lastVisitedPageIndex;
+            if (!parsedState.mainCheckCounter) {
+                presenter.mainCheckCounter = [];
+            } else {
+                presenter.mainCheckCounter = parsedState.mainCheckCounter;
+            }
+            if (!parsedState.limitedCheckCount) {
+                presenter.limitedCheckCount = [];
+            } else {
+                presenter.limitedCheckCount = parsedState.limitedCheckCount;
+            }
+            presenter.showAnswerCounter = parsedState.showAnswerCounter;
+            presenter.whiteboardFontSize = parsedState.whiteboardFontSize;
+            presenter.pageDone = parsedState.pageDone;
+
+            // GSA panel
+            presenter.panelCoords = parsedState.panelCoords
+            if (presenter.$panel) {
+                setPanelPosition();
+            }
+
+            // limited panels
+            var pageIndex = parseInt(presenter.currentIndex);
+            presenter.collectLimitedPanels(0);
+            if (presenter.limitedCheckCount[pageIndex]) {
+                for (let i = 0; i &lt; presenter.limitedCheckCount[pageIndex].length; i++) {
+                    if (presenter.limitedCheckCount[pageIndex][i] &gt;= presenter.checksNumber) {
+                        if (presenter.panelGSA[i]) {
+                            presenter.playerController.getModule(presenter.panelGSA[i][1]).show();
+                        }
+                    }
+                }
+            }
+
+            // font-size mobile fix
+            // setTimeout(() =&gt; presenter.fontSizeMobileFix(), 0);
+        }
+    };
+
+    presenter.executeCommand = function (name, params) {
+        var commands = {
+            &apos;addButtonsToAllAudioModules&apos;: presenter.addButtonsToAllAudioModules,
+            &apos;avatarReady&apos;: presenter.avatarReady,
+            &apos;goToPDFPage&apos;: presenter.goToPDFPage,
+            &apos;getLastVisitedPageId&apos;: presenter.getLastVisitedPageId,
+            &apos;getLastVisitedPageIndex&apos;: presenter.getLastVisitedPageIndex
+        };
+        Commands.dispatch(commands, name, params, presenter);
+    };
+
+    presenter.destroy = function (event) {
+        presenter.view.removeEventListener(&apos;DOMNodeRemoved&apos;, presenter.destroy);
+        // if (presenter.playerController &amp;&amp; !presenter.playerController.isPlayerInCrossDomain()) {
+        //     $(window.parent.document).unbind(&apos;scroll&apos;);
+        // }
+    };
+
+    return presenter;
+}</presenter></addon>

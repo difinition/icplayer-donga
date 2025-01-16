@@ -1,0 +1,102 @@
+.connectionContainer {
+    height: 100%;
+    width: 100%;
+    padding: 0px;
+    border-collapse:collapse;
+    border-spacing: 0px;
+    direction: ltr;
+}
+
+.connectionContainer .connectionLeftColumn {
+    width: 33%;
+    height: 100%;
+    padding: 0px;
+}
+
+.connectionContainer .connectionMiddleColumn {
+    width: 34%;
+    height: 100%;
+    padding: 0px;
+    overflow: hidden;
+    overflow-x: visible;
+}
+
+.connectionContainer .connectionRightColumn {
+    width: 33%;
+    height: 100%;
+    padding: 0px;
+}
+
+.connectionContainer .connectionTopRow {
+    width: 100%;
+    height: 33%;
+    padding: 0px;
+}
+
+.connectionContainer .connectionMiddleRow {
+    width: 100%;
+    height: 33%;
+    padding: 0px;
+    overflow: hidden;
+    overflow-y: visible;
+}
+
+.connectionContainer .connectionBottomRow {
+    width: 100%;
+    height: 33%;
+    padding: 0px;
+}
+
+.connectionContainer .connections {
+    width: 100%;
+    height: 100%;
+}
+
+.connectionContainer .connectionItem {
+    width: 100%;
+    padding: 0px;
+    border-collapse:collapse;
+    border-spacing: 0px;
+    border: solid 1px black;
+}
+
+.connectionContainer .connectionMiddleRow > td {
+    display: flex;
+}
+
+.connectionContainer .answerItem {
+    width: 100%;
+    padding: 0px;
+}
+
+.connectionContainer .content {
+    height: 100%;
+    width: 100%;
+    border-collapse:collapse;
+    border-spacing: 0px;
+}
+
+.connectionContainer .content .connectionItemWrapper {
+    padding: 0px;
+}
+
+.connectionContainer .connectionTopRow .content .connectionItemWrapper {
+    vertical-align: bottom;
+}
+
+.connectionContainer .connectionBottomRow .content .connectionItemWrapper {
+    vertical-align: top;
+}
+
+.connection_line {
+    position: absolute;
+    height:2px;
+}
+
+.correctAnswerDiv::before {
+    content: "\2714";
+}
+
+.inCorrectAnswerDiv::before {
+    content: "\2716";
+}
