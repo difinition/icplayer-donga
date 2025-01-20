@@ -36,4 +36,46 @@
 		<nature>com.google.appengine.eclipse.core.gaeNature</nature>
 		<nature>com.google.gwt.eclipse.core.gwtNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>classes</name>
+			<type>2</type>
+			<location>C:/aa-biz/06_icplayer/workspace_4.8-Photon/icfoundation/war/WEB-INF/classes</location>
+		</link>
+		<link>
+			<name>gwt-2.5.1</name>
+			<type>2</type>
+			<location>C:/aa-biz/06_icplayer/gwt/gwt-2.5.1</location>
+		</link>
+		<link>
+			<name>icfoundation-classes</name>
+			<type>2</type>
+			<location>C:/aa-biz/06_icplayer/workspace_4.8-Photon/icfoundation/war/WEB-INF/classes</location>
+		</link>
+		<link>
+			<name>icfoundation-main-java</name>
+			<type>2</type>
+			<location>C:/aa-biz/06_icplayer/workspace_4.8-Photon/icfoundation/src/main/java</location>
+		</link>
+		<link>
+			<name>icfoundation-test-java</name>
+			<type>2</type>
+			<location>C:/aa-biz/06_icplayer/workspace_4.8-Photon/icfoundation/src/test/java</location>
+		</link>
+		<link>
+			<name>java</name>
+			<type>2</type>
+			<location>C:/aa-biz/06_icplayer/workspace_4.8-Photon/icfoundation/src/main/java</location>
+		</link>
+		<link>
+			<name>main</name>
+			<type>2</type>
+			<location>C:/aa-biz/06_icplayer/workspace_4.8-Photon/icfoundation/src/main</location>
+		</link>
+		<link>
+			<name>test</name>
+			<type>2</type>
+			<location>C:/aa-biz/06_icplayer/workspace_4.8-Photon/icfoundation/src/test</location>
+		</link>
+	</linkedResources>
 </projectDescription>

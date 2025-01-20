@@ -2,6 +2,149 @@
 <project name="icplayer" default="dist" basedir="." xmlns:if="ant:if" xmlns:unless="ant:unless">
     <taskdef name="for" classname="com.icplayer.ac.ForTask" classpath="addons/addon-compiler.jar"/>
 
+        <!--     
+             ■■ 001 ●100 [T]"dist"  : 플레이어 패키지 만들기
+                     |  |
+             ■■ 002  |  |_●01 [T]"validate-translations-javascript" : 파일 JSON 검증하기  => Python 스크립트는 특정 폴더 안의 JavaScript 파일을 처리하고, 해당 파일이 JSON 형식으로 변환 가능한지 검증
+                     |  |
+             ■■ 003  |  |_●02 [T]"build" : 프로젝트 빌드
+                     |      |
+             ■■ 004  |      |_●01 [T]"clean" : 프로젝트 클린
+                     |      |              |_▶ 1) 디렉토리 삭제 : war/WEB-INF/classes 
+                     |      |              |_▶ 2) 디렉토리 삭제 : war/icplayer
+                     |      |              |_▶ 3) 디렉토리 삭제 : gwt-unitCache
+                     |      |              
+             ■■ 005  |      |_●02 [T]"test"  : 개발 및 운영 모드 테스트
+                     |      |   |
+             ■■ 006  |      |   |               _●01 [T]"addons"  : 애드온 복사
+                     |      |   |              |                |_▶ 1) <ant dir="addons"/>  실행
+                     |      |   |              |
+             ■■ 007  |      |   |          _●01 [T]"javac"  : 자바 소스를 바이트코드로 컴파일
+                     |      |   |         |               |_▶ 1) <compile-java />   실행
+                     |      |   |         |                   ▶  macrodef 실행
+                     |      |   |         |
+             ■■ 008  |      |   |     _●01 [T]"javac.tests" : 테스트 코드 컴파일
+                     |      |   |    |                    |_▶ 1) <compile-java-test />  실행
+                     |      |   |    |
+             ■■ 009  |      |   |_●01 [T]"test.prod"  : 운영 모드 테스트 실행
+                     |      |                       |_▶ 1) reports/htmlunit.prod 디렉토리 생성
+                     |      |                       |_▶ 2) junit 테스트 실행
+                     |      |                       |_▶   2-1) jvm 메모리설정
+                     |      |                       |_▶   2-2) 프로퍼티 설정
+                     |      |                       |_▶   2-3) 클래스 패스 설정
+                     |      |                       |_▶   2-4) batchtest 설정
+                     |      |
+             ■■ 010  |      |         _●01 [T]"addons" : 애드온 복사  ♥♥♥한번 실행된 타겟은 실행하지 않음♥♥♥
+                     |      |        |
+             ■■ 011  |      |    _●01 [T]"javac" :                ♥♥♥한번 실행된 타겟은 실행하지 않음♥♥♥
+                     |      |   |
+        _____________|______|___|___________________[▼▼▼build-js-addons-compress.xml▼▼▼]________________________________________________________________
+                     |      |   |      ●property (폴더정의)
+                     |      |   |        "public"                   : src/main/java/com/lorepo/icplayer/public
+                     |      |   |        "libs"                     : src/main/java/com/lorepo/icplayer/public/libs
+                     |      |   |        "build.folder"             : src/main/java/com/lorepo/icplayer/public/build
+                     |      |   |        "build.temp.folder"        : src/main/java/com/lorepo/icplayer/public/build/temp
+                     |      |   |        "build.temp.addons.folder" : src/main/java/com/lorepo/icplayer/public/build/temp/addons
+                     |      |   |        "build.dist.folder"        : src/main/java/com/lorepo/icplayer/public/build/dist
+                     |      |   |        "addons.folder"            : src/main/java/com/lorepo/icplayer/public/addons
+                     |      |   |        "addons.temp.file"         : src/main/java/com/lorepo/icplayer/public/build/temp/addons/addons.temp.xml
+                     |      |   |        "addons.temp.header.file"  : src/main/java/com/lorepo/icplayer/public/build/temp/addons/addons.header.temp.xml
+                     |      |   |        "addons.destination.file"  : src/main/java/com/lorepo/icplayer/public/build/dist/addons.min.xml
+                     |      |   |
+                     |      |   |
+                     |      |   |
+             ■■ 012  |      |   |               _●01 [T]"clear.addons" : addons 디렉토리 삭제
+                     |      |   |              |        |_▶ 1) 디렉토리 삭제 : src/main/java/com/lorepo/icplayer/public/build/temp/addons
+                     |      |   |              |                    
+             ■■ 013  |      |   |          _●01 [T]"clear.temp" : temp 디렉토리 삭제
+                     |      |   |         |             |_▶ 1) 디렉토리 삭제 : src/main/java/com/lorepo/icplayer/public/build/temp
+                     |      |   |         |
+             ■■ 014  |      |   |     _●01 [T]"clear.full" : build 디렉토리 삭제
+                     |      |   |    |                  |_▶ 1) 디렉토리 삭제 : src/main/java/com/lorepo/icplayer/public/build
+                     |      |   |    |
+             ■■ 015  |      |   |    |_●02 [T]"init" : 필요한 폴더 구조 생성.
+                     |      |   |    |                  |_▶ 1) 디렉토리 생성 : src/main/java/com/lorepo/icplayer/public/build/temp 
+                     |      |   |    |                  |_▶ 2) 디렉토리 생성 : src/main/java/com/lorepo/icplayer/public/build/dist
+                     |      |   |    |                  |_▶ 3) 디렉토리 생성 : src/main/java/com/lorepo/icplayer/public/build/temp/addons
+                     |      |   |    |
+             ■■ 016  |      |   |_●02 [T]"bundle-libs" : <import file="build-js-addons-compress.xml"/>
+                     |      |   |                       bundle-libs 타겟 실행 시:
+                     |      |   |                       |_▶ 1) 콘솔에 "Bundling libs" 메시지를 출력
+                     |      |   |                       |_▶ 2) [T]"compile.and.copy.commons" : 공통 애드온 컴파일 및 클리어 
+                     |______|___|_______________________|_______________________________________[▼▼▼./addons/Commons/build.xml▼▼▼]________________________
+                     |      |   |                       |    ●property (폴더정의)
+                     |      |   |                       |      "publish.dir"              : path_to\website-corporate\src\lorepo\templates\static_files\icplayer\libs
+                     |      |   |                       |      "commons.version"          : 4.5.1  
+                     |      |   |                       |      "publish-directory"        : path_to\website-corporate\src\lorepo\templates\static_files\icplayer\libs
+                     |      |   |                       |
+             ■■ 017  |      |   |                       |         _●01 [T]"compile" : 소스 파일을 컴파일하고 하나의 최적화된 파일로 최소화
+                     |      |   |                       |        |             |_▶ 1) 디렉토리 생성 : bin
+                     |      |   |                       |        |             |_▶ 2) 디렉토리 생성 : bin/commons-${commons.version}  <<< 4.5.1
+                     |      |   |                       |        |             |_▶ 3) Google Closure Compiler 실행 : src 디렉터리의 여러 JS 파일을 병합 및 압축하여 최적화된 commons.js 생성.
+                     |      |   |                       |        |             |_▶  3-1) jar실행 : ../tools/closure.jar 
+                     |      |   |                       |        |             |_▶  3-2) 라인추가  : - -js src/model-validation.js
+                     |      |   |                       |        |             |_▶  3-3) 라인추가  : - -js src/dom-operations.js
+                     |      |   |                       |        |             |_▶  3-4) 라인추가  : - -js src/statefull-addon-object.js
+                     |      |   |                       |        |             |_▶  3-5) 라인추가  : ... 위 3개 이외 27개 js 라인 추가 
+                     |      |   |                       |        |             |_▶  3-6) 라인추가  : - -js_output_file bin/commons-${commons.version}/commons.js
+                     |      |   |                       |        |             |_▶                ※bin/commons-4.5.1/commons.js 파일로 최소화
+                     |      |   |                       |        |             |_▶  3-7) 라인추가  : 포함된 컴포넌트 정보와 버전 정보를 commons.js에 추가.
+                     |      |   |                       |        |
+                     |      |   |                       |_▶  2-1) [T]"publish" : ICPlayer 라이브러리에 Commons의 새 버전 배포 
+                     |      |   |                       |                      |_▶ 1) "compile"에서 생성한 bin/commons-4.5.1/commons.js파일을
+                     |      |   |                       |                              /src/main/java/com/lorepo/icplayer/public/libs/commons.js로 복사   
+                     |      |   |                       |
+                     |      |   |                       |_▶  2-2) [T]"clear"   : 주어진 디렉토리에 Commons의 새 버전 배포"
+                     |      |   |                       |                      |_▶ 1) 디렉토리 삭제 : "compile"에서 생성한 bin 디렉토리
+                     |      |   |                       |                      
+                     |______|___|_______________________|_______________________________________[▲▲▲./addons/Commons/build.xml▲▲▲]________________________
+             ■■ 018  |      |   |                       |      _●01 [T]"init"        : ♥♥♥한번 실행된 타겟은 실행하지 않음♥♥♥
+                     |      |   |                       |     |
+             ■■ 019  |      |   |                       |     |_●02 [T]"js.compress" : 각 JavaScript 라이브러리를 병합
+                     |      |   |                       |     |               |_▶ 1) YUI Compressor를 사용하여 JavaScript 파일을 **압축(최적화)**
+                     |      |   |                       |     |               |_▶ 2) 최적화된 파일들을 복사 : src/main/java/com/lorepo/icplayer/public/build/temp 
+                     |      |   |                       |     |
+                     |      |   |                       |_▶ 3) [T]"js.concatenate" : JavaScript 파일 압축 및 병합.
+                     |      |   |                       |_▶ 4) [T]"addons.compress" : 애드온 파일(XML) 병합.
+                     |      |   |                       |     |_▶ 1) XML 애드온 파일 병합 후 헤더 추가.
+                     |      |   |                       |     |_▶ 2) [T]"clear.addons" : 에드온 임시 폴더 삭제
+                     |      |   |                       |                 |_▶ 디렉토리 삭제 : src/main/java/com/lorepo/icplayer/public/build/temp/addons
+                     |      |   |                       |     
+             ■■ 020  |      |   |                       |      _●01 [T]"clear.addons" : ♥♥♥한번 실행된 타겟은 실행하지 않음♥♥♥
+                     |      |   |                       |     |
+                     |      |   |                       |_▶ 5) [T]"clear.temp" : 임시폴더 삭제
+                     |      |   |                       |     |_▶ 1) 디렉토리 삭제 : src/main/java/com/lorepo/icplayer/public/build/temp
+                     |      |   |                       |     
+                     |      |   |                       |_▶ 6) 콘솔에 "Bundling ended with: SUCCESS" 메시지를 출력
+                     |      |   |                                                                       
+        _____________|______|___|___________________[▲▲▲build-js-addons-compress.xml▲▲▲]________________________________________________________________
+                     |      |   |
+             ■■ 021  |      |_●03 [T]"gwtc" : GWT 컴파일하여 JavaScript로 작성 (운영 모드)     
+                     |                    |_▶ 1) GWT 컴파일러 실행: 지정된 클래스 경로와 JVM 옵션을 사용해 com.google.gwt.dev.Compiler를 실행합니다.
+                     |                    |_▶ 2) classpath 설정
+                     |                    |_▶   2-1) src 폴더              : src/main/java
+                     |                    |_▶   2-2) icfoundation-src 폴더 : ../icfoundation/src/main/java
+                     |                    |_▶   2-3) 프로젝트 클래스 패스
+                     |                    |_▶       2-3-1) 기본폴더               : war/WEB-INF/classes 
+                     |                    |_▶       2-3-2) gwt-user.jar 폴더    : build.properties 파일에서 지정
+                     |                    |_▶       2-3-3) gwt-dev.jar  파일    : build.properties 파일에서 지정
+                     |                    |_▶       2-3-4) 기본 lib 파일          : war/WEB-INF/lib/**/*.jar
+                     |                    |_▶       2-3-5) jsoup-1.10.3.jar 폴더 : libs/jsoup-1.10.3.jar
+                     |                    |_▶       2-3-5) icfoundation 클래스 폴더 : ../icfoundation/war/WEB-INF/classes
+                     |                    |_▶   2-4) GA.jar 폴더           : ${gwt.sdk}/validation-api-1.0.0.GA.jar
+                     |                    |_▶   2-5) GA-sources.jar 폴더   : ${gwt.sdk}/validation-api-1.0.0.GA-sources.jar
+                     |                    |_▶ 3) JVM 메모리 설정
+                     |                    |_▶ 4) 결과물이 저장될 디렉터리 이름 (여기서는 war)
+                     |                    |_▶ 5) 결국, GWT Compiler(com.google.gwt.dev.Compiler) 실행 하여, Java 코드를 JavaScript로 변환 war 디렉터리에 저장
+                     |
+             ■■ 022  |_ ▶ [T]"create.package" : 패키지생성
+                              |_▶ 1) 디렉토리 삭제 : dist
+                              |_▶ 2) 디렉토리 생성 : dist/build
+                              |_▶ 3) 디렉토리 복사 : war/icplayer 디렉터리의 모든 파일과 하위 폴더를 dist/build/icplayer로 복사 
+                              |_▶ 4) 디렉토리 복사 : doc/demo 디렉터리의 모든 파일과 하위 폴더를 dist/build로 복사합니다.
+                              |_▶ 5) 디렉토리 압축 : dist/build 디렉토리의 모든 내용을 압축하여 dist/icplayer.zip 파일로 만듭니다.
+        --> 
+
     <property file="build.properties"/>
     <property name="src" location="src/main/java"/>
     <property name="src-test" location="src/test/java"/>
@@ -11,7 +154,7 @@
     <property name="jsoup-lib" location="libs/jsoup-1.10.3.jar"/>
 
     <!-- Arguments to gwtc and devmode targets -->
-  	<property name="gwt.args" value=""/>
+    <property name="gwt.args" value=""/>
     <import file="build-js-addons-compress.xml"/>
 
     <property name="libs.junit" location="libs/junit-4.9.jar"/>
