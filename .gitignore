@@ -6,7 +6,6 @@
 /reports
 /target
 /test
-/build.properties
 /.idea
 **/*.iml
 /addons/addons.list.temp
